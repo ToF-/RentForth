@@ -1,1 +1,17 @@
 \ Rent.fs
+
+VARIABLE #ORDERS
+
+: INIT-ORDERS 0 #ORDERS ! ;
+CREATE ORDERS 20000 CELLS ALLOT
+
+: ADD-ORDER ( start,duration,price -- )
+    1 #ORDERS +! ;
+
+0 CONSTANT CASH
+1 63 LSHIFT CONSTANT RENT
+
+: EVENT-TYPE ( evt -- type )
+    63 RSHIFT 1 AND ;
+    
+    
