@@ -28,3 +28,17 @@ DEFER  INF
 : SORT ( adr,len -- )
     1- ?DUP IF CELLS OVER + QSORT ELSE DROP THEN ;
 
+
+DEFER CMP
+' - IS CMP
+
+
+: (LOOK-UP) ( elem,l,h -- adr,f )
+    ROT >R
+    2DUP MID @ R> CR .S SWAP 0= IF 2DROP TRUE EXIT THEN
+    DROP 2DROP FALSE ;
+
+: LOOK-UP ( elem,adr,len -- )
+    ?DUP IF 1- CELLS OVER + (LOOK-UP) ELSE FALSE THEN ;
+    
+
