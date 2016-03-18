@@ -33,21 +33,16 @@ DEFER  INF
 DEFER CMP
 ' - IS CMP
 
-: (LOOK-UP) ( elem,l,h -- adr,t | f  )
-    FALSE >R ROT >R
-    BEGIN
+: (LOOK-UP) ( elem,l,h -- adr | f  )
+    ROT >R BEGIN
         2DUP > NOT 
-    WHILE  ( l,h -- )
-        2DUP MID DUP @ R@ CMP ( l,h,m,f -- )
-        ?DUP 0= IF R> R> 2DROP TRUE >R >R 
-        ELSE 0 < IF  ( l,h,m -- )
-            CELL+ ROT DROP SWAP ( m,h -- )
-        ELSE ( l,h,m -- )
-            CELL- NIP
-        THEN THEN
-    REPEAT ( l,h -- )
-    2DROP R> R> DUP 0= IF NIP THEN ;
-
+    WHILE 
+        2DUP MID DUP @ R@ CMP
+        DUP 0= IF ( found ) 
+        ELSE 0 < IF CELL+ ROT DROP SWAP
+        ELSE        CELL- NIP THEN THEN 
+    REPEAT R> DROP
+    IF DROP FALSE ELSE -ROT 2DROP THEN ;
 
 : LOOK-UP ( elem,adr,len -- )
     ?DUP IF 1- CELLS OVER + (LOOK-UP) ELSE 2DROP FALSE THEN ;
