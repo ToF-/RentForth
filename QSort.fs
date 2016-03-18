@@ -1,5 +1,6 @@
 \ QSort
 
+: NOT 0= ;
 : -CELL -1 CELLS ;
 : CELL- 1 CELLS - ;
 
@@ -32,13 +33,23 @@ DEFER  INF
 DEFER CMP
 ' - IS CMP
 
+: (LOOK-UP) ( elem,l,h -- adr,t | f  )
+    FALSE >R ROT >R
+    BEGIN
+        2DUP > NOT 
+    WHILE  ( l,h -- )
+        2DUP MID DUP @ R@ CMP ( l,h,m,f -- )
+        ?DUP 0= IF R> R> 2DROP TRUE >R >R 
+        ELSE 0 < IF  ( l,h,m -- )
+            CELL+ ROT DROP SWAP ( m,h -- )
+        ELSE ( l,h,m -- )
+            CELL- NIP
+        THEN THEN
+    REPEAT ( l,h -- )
+    2DROP R> R> DUP 0= IF NIP THEN ;
 
-: (LOOK-UP) ( elem,l,h -- adr,f )
-    ROT >R
-    2DUP MID @ R> CR .S SWAP 0= IF 2DROP TRUE EXIT THEN
-    DROP 2DROP FALSE ;
 
 : LOOK-UP ( elem,adr,len -- )
-    ?DUP IF 1- CELLS OVER + (LOOK-UP) ELSE FALSE THEN ;
+    ?DUP IF 1- CELLS OVER + (LOOK-UP) ELSE 2DROP FALSE THEN ;
     
 
