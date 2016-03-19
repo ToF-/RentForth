@@ -50,4 +50,5 @@ DEFER CMP
 : LOOK-UP ( elem,adr,len -- )
     ?DUP IF LIMITS (LOOK-UP) ELSE 2DROP FALSE THEN ;
     
-
+: (UNIQ) ( adr,len -- adr+1, len' )
+    DUP 1 > IF SWAP CELL+ SWAP THEN 1- ;
