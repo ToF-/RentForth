@@ -50,5 +50,20 @@ DEFER CMP
 : LOOK-UP ( elem,adr,len -- )
     ?DUP IF LIMITS (LOOK-UP) ELSE 2DROP FALSE THEN ;
     
-: (UNIQ) ( adr,len -- adr+1, len' )
-    DUP 1 > IF SWAP CELL+ SWAP THEN 1- ;
+: MOVE-BY-1-CELL ( adr,len -- )
+    OVER CELL+ -ROT CELLS MOVE ;
+
+: DUPLICATE? ( adr -- f )
+    DUP CELL+ @ SWAP @ CMP 0= ;
+  
+: .STEP CR .S KEY DROP ;
+: UNIQ ( adr,len -- len' )
+    DUP >R
+    BEGIN
+        DUP 1 > 
+    WHILE ( adr,len -- )
+        1-
+        OVER DUPLICATE? IF 2DUP MOVE-BY-1-CELL R> 1- >R 1-  THEN
+        SWAP CELL+ SWAP
+    REPEAT 
+    2DROP R> ;
