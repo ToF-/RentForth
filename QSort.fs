@@ -56,7 +56,6 @@ DEFER CMP
 : DUPLICATE? ( adr -- f )
     DUP CELL+ @ SWAP @ CMP 0= ;
   
-: .STEP CR .S KEY DROP ;
 : UNIQ ( adr,len -- len' )
     DUP >R
     BEGIN
