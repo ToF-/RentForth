@@ -123,6 +123,7 @@ CREATE D 0 , 1 , 1 , 2 , 3 , 3 , 4 , 5 , 6 , 6 ,
     7 0 DO D I CELLS +  @ I ASSERT( EQUALS ) LOOP 
 ; 
 
+    
 PAGE
 ' < IS INF
 TEST-EQUALS
@@ -142,7 +143,6 @@ TEST-LOOKUP-IN-4-ITEM-ARRAY
 TEST-ALT-LOOKUP
 ' - IS CMP
 TEST-UNIQ 
-
 
 ." Success "
 .S

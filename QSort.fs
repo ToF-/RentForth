@@ -32,7 +32,6 @@ DEFER  INF
 : SORT ( adr,len -- )
     DUP 1 > IF LIMITS QSORT ELSE 2DROP THEN ;
 
-
 DEFER CMP
 ' - IS CMP
 
@@ -57,12 +56,16 @@ DEFER CMP
     DUP CELL+ @ SWAP @ CMP 0= ;
   
 : UNIQ ( adr,len -- len' )
-    DUP >R
+    DUP >R                          ( initial length )
     BEGIN
         DUP 1 > 
     WHILE ( adr,len -- )
-        1-
-        OVER DUPLICATE? IF 2DUP MOVE-BY-1-CELL R> 1- >R 1-  THEN
+        1-                          
+        OVER DUPLICATE? IF
+            2DUP MOVE-BY-1-CELL 
+            R> 1- >R                ( update array length )
+            1-  
+        THEN
         SWAP CELL+ SWAP
     REPEAT 
     2DROP R> ;
