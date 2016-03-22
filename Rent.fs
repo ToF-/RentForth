@@ -1,27 +1,20 @@
 \ Rent.fs
+INCLUDE ffl/hct.fs
 
-1 21 LSHIFT 1- CONSTANT MASK
+20000 CONSTANT MAX-VALUES
+MAX-VALUES HCT-CREATE VALUE-TABLE 
 
-: RENT-ORDER ( st,du,pr -- order )
-    ROT 21 LSHIFT 
-    ROT OR 21 LSHIFT
-    SWAP OR ;
+: TO-STRING ( n -- adr,cnt )
+    0 <# #S #> ;
 
-: ORDER>SDP ( order -- st,du,pr )
-    DUP MASK AND >R
-    21 RSHIFT DUP MASK AND >R
-    21 RSHIFT R> R> ;
+: SET-VALUE ( n,k -- )
+    DUP TO-STRING VALUE-TABLE HCT-GET 
+    IF ROT MAX SWAP THEN
+    TO-STRING VALUE-TABLE HCT-INSERT ;
+             
+         
 
-: ORDER>BID ( order -- bid )
-    MASK AND ;
+: GET-VALUE ( k -- n,f | false )
+    TO-STRING VALUE-TABLE HCT-GET ;
 
-: ORDER>DURATION ( order -- dur )
-    21 RSHIFT MASK AND ;
- 
-: ORDER>START ( order -- start )
-    42 RSHIFT MASK AND ;
-
-    
-
-    
     
