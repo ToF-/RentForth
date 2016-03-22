@@ -5,16 +5,14 @@ INCLUDE ffl/hct.fs
 MAX-VALUES HCT-CREATE VALUE-TABLE 
 
 : TO-STRING ( n -- adr,cnt )
-    0 <# #S #> ;
+    BASE @ SWAP 0 64 BASE ! <# #S #> ROT BASE ! ;
 
-: SET-VALUE ( n,k -- )
-    DUP TO-STRING VALUE-TABLE HCT-GET 
-    IF ROT MAX SWAP THEN
-    TO-STRING VALUE-TABLE HCT-INSERT ;
-             
-         
+: UPDATE-VALUE ( n,k -- )
+    TO-STRING 2DUP 2>R VALUE-TABLE HCT-GET ( n,v,f )
+    IF MAX THEN 2R> VALUE-TABLE HCT-INSERT ;
 
 : GET-VALUE ( k -- n,f | false )
     TO-STRING VALUE-TABLE HCT-GET ;
 
-    
+: UPDATE-MAX ( n adr -- )
+    DUP @ ROT MAX SWAP ! ;
