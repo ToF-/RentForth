@@ -3,16 +3,23 @@ INCLUDE ffl/hct.fs
 
 20000 CONSTANT MAX-VALUES
 MAX-VALUES HCT-CREATE VALUE-TABLE 
+VARIABLE MAX-VALUE
 
-: TO-STRING ( n -- adr,cnt )
+: S>KEY ( n -- adr,cnt )
     BASE @ SWAP 0 64 BASE ! <# #S #> ROT BASE ! ;
 
 : UPDATE-VALUE ( n,k -- )
-    TO-STRING 2DUP 2>R VALUE-TABLE HCT-GET ( n,v,f )
+    S>KEY 2DUP 2>R VALUE-TABLE HCT-GET ( n,v,f )
     IF MAX THEN 2R> VALUE-TABLE HCT-INSERT ;
 
 : GET-VALUE ( k -- n,f | false )
-    TO-STRING VALUE-TABLE HCT-GET ;
+    S>KEY VALUE-TABLE HCT-GET ;
 
 : UPDATE-MAX ( n adr -- )
     DUP @ ROT MAX SWAP ! ;
+
+: INIT-VALUES ( -- )
+    0 MAX-VALUE ! ;
+
+: ADD-ORDER ( start,duration,bid -- )
+    MAX-VALUE UPDATE-MAX 2DROP ;

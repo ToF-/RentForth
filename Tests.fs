@@ -20,12 +20,19 @@ VARIABLE V
     5 V UPDATE-MAX
     T{ V @ 10 ?S }T 
 ;
+
+: TEST-ADD-ORDER
+    INIT-VALUES
+    0 5 10 ADD-ORDER
+    T{ MAX-VALUE @ 10 ?S }T
+;
     
 
 
 : TESTS
     TEST-VALUE-TABLE
     TEST-UPDATE-MAX
+    TEST-ADD-ORDER
 ;
 
 TESTS
