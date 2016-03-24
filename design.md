@@ -1,5 +1,5 @@
 
-processing these orders: (start X duration X money)
+processing these orders: (start time X duration X money)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 0  5  100
 3  7  140
