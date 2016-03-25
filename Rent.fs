@@ -10,9 +10,7 @@ VARIABLE MAX-VALUE
     DUP @ ROT MAX SWAP ! ;
 
 : S>KEY ( n -- adr c )
-    BASE @ 64 BASE ! 
-    SWAP S>D <# #S #>
-    ROT BASE ! ;
+    S>D <# #S #> ;
 
 : VALUE#@ ( time -- n )
     S>KEY VALUES @ HCT-GET 0= IF 0 THEN ;
