@@ -16,7 +16,7 @@ INCLUDE Rent.fs
 : TEST-RENT
     INIT-RENT
     0 5 10 RENT
-    T{ 5 RENT-VALUE@ 10 ?S }T 
+    T{ 5 RENT-VALUE#@ 10 ?S }T 
 ;
  
 : TEST-ONE-ORDER
