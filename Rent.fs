@@ -1,45 +1,28 @@
 \ Rent.fs
-INCLUDE ffl/hct.fs
 
 10000 CONSTANT MAX-ORDERS
-VARIABLE VALUES
-VARIABLE CUR-VALUE
-VARIABLE MAX-VALUE
-VARIABLE LAST-END
+VARIABLE CURRENT-VALUE
+VARIABLE RENT-VALUE
+VARIABLE RENT-HCT-VALUES
 
-: MAX! ( n adr -- )
-    DUP @ ROT MAX SWAP ! ;
+: RENT-VALUES
+    RENT-HCT-VALUES @ ;
 
-: S>KEY ( n -- adr c )
+: INIT-RENT
+    0 RENT-VALUE ! 0 CURRENT-VALUE !
+    RENT-VALUES ?DUP IF HCT-FREE THEN
+    MAX-ORDERS 2 * HCT-NEW RENT-HCT-VALUES ! ;
+
+: S>KEY ( n -- addr c )
     S>D <# #S #> ;
 
-: VALUE#@ ( time -- n )
-    S>KEY VALUES @ HCT-GET 0= IF 0 THEN ;
+: RENT-VALUE@ ( t -- n )
+    S>KEY RENT-VALUES HCT-GET 0= IF 0 THEN ;
 
-: VALUE#! ( time -- n )
-    S>KEY VALUES @ HCT-INSERT ;
+: RENT ( s d b -- )
+    CURRENT-VALUE @ + 
+    DUP RENT-VALUE @ MAX RENT-VALUE !
+    -ROT + S>KEY RENT-VALUES HCT-INSERT ;
 
-: VALUE#-MAX! ( n time -- )
-    DUP VALUE#@ ROT MAX SWAP VALUE#! ;
-
-: INITIALIZE
-    0 CUR-VALUE ! 0 MAX-VALUE ! 0 LAST-END !
-    VALUES @ ?DUP IF HCT-FREE THEN
-    MAX-ORDERS 2* HCT-NEW VALUES ! ;
-    
-: pr
-    values @ hct-dump
-    cr cur-value ? max-value ?
-    key drop
-;
-: END-TO-START ( s )
-    LAST-END @ VALUE#@ SWAP VALUE#-MAX! ;
-
-: ADD-ORDER ( s d b -- )
-    -ROT OVER DUP LAST-END @ > IF DUP END-TO-START THEN
-         VALUE#@ CUR-VALUE MAX! \ b s d 
-    OVER CUR-VALUE @ SWAP VALUE#-MAX! \ b s d 
-    + DUP ROT CUR-VALUE @ +  SWAP DUP LAST-END ! VALUE#-MAX!
-    VALUE#@ MAX-VALUE MAX! ; 
-    
-
+: COLLECT ( t -- )
+    RENT-VALUE@ CURRENT-VALUE @ MAX CURRENT-VALUE ! ;

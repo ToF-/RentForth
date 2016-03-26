@@ -1,0 +1,8 @@
+include Rent.fs
+initialize
+0027927 0969361 063146 add-order
+0070299 0872016 069262 add-order
+0218010 0017548 015272 add-order
+0369181 0877265 087211 add-order
+0943347 0648382 035023 add-order
+cr max-value ? bye
