@@ -39,3 +39,34 @@ VARIABLE RENT-HCT-VALUES
 
 : COLLECT ( t -- )
     RENT-VALUE#@ CURRENT-VALUE MAX! ;
+
+1 CONSTANT RENT-CODE
+0 CONSTANT COLLECT-CODE 
+
+: ENCODE-RENT ( s d b -- evR )
+    ROT 1 LSHIFT RENT-CODE OR
+    21 LSHIFT ROT OR
+    21 LSHIFT SWAP OR ;
+
+: ENCODE-COLLECT ( s d -- evC )
+    + 1 LSHIFT 42 LSHIFT ;
+
+: ORDER>EVENTS ( s d b -- evR evC )
+    >R 2DUP R> 
+    ENCODE-RENT
+    -ROT
+    ENCODE-COLLECT ;
+
+: RENT? ( ev -- t|f )
+    1 42 LSHIFT AND ;
+
+: DECODE-EVENT { ev -- s d b xRent | s xCollect }
+    DUP RENT? IF
+        DUP 1 21 LSHIFT 1- AND
+        SWAP 21 RSHIFT
+        DUP 1 21 LSHIFT 1- AND
+        -ROT
+        SWAP 22 RSHIFT -ROT 
+        ['] RENT
+    ELSE
+    THEN ;
