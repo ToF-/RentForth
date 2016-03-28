@@ -77,7 +77,7 @@ INCLUDE Rent.fs
     INIT-RENT
     0 5 10 ADD-ORDER
     3 7 14 ADD-ORDER
-    PRINT-EVENTS
+    .EVENTS
     COMPUTE-VALUE
     T{ 14 ?S }T ;
 
