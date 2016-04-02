@@ -1,20 +1,82 @@
 \ Rent.fs
+REQUIRE ffl/act.fs
+REQUIRE ffl/hct.fs
+
 VARIABLE EVENT-ID
 
-0 CONSTANT CASH
-1 CONSTANT RENT
+0  CONSTANT CASH%
+1  CONSTANT RENT%
 1  CONSTANT KIND%
 15 CONSTANT KEY%
 24 CONSTANT TIME%
-: INIT-EVENT-ID 0 EVENT-ID ! ;
+0  CONSTANT NO-DATA
+1 TIME% LSHIFT 1- CONSTANT TIME-MASK%
+
+VARIABLE ACT-EVENTS
+VARIABLE RENT-VALUE
+VARIABLE HCT-VALUES
+
+: EVENTS ( -- act )
+    ACT-EVENTS  @ ;
+
+: VALUES ( -- hct )
+    HCT-VALUES @ ;
+
+
 : NEXT-ID ( -- id ) EVENT-ID DUP @ 1 ROT +! ;
-: <<KIND! ( kind -- n )        KIND% LSHIFT OR ;
-: <<KEY!  ( n id -- key )       KEY% LSHIFT OR ;
-: <<TIME! ( bid time -- data ) TIME% LSHIFT OR ;
-: EVENT-KEY ( kind time -- key ) <<KIND! NEXT-ID SWAP <<KEY! ;
-: EVENT-DATA ( start duration bid kind -- data )
-    IF -ROT + <<TIME! ELSE 0 THEN ;
+
+: SHIFTOR LSHIFT OR ;
+
+: EVENT-KEY ( kind time -- key ) 
+    KIND% SHIFTOR NEXT-ID SWAP KEY% SHIFTOR ;
+
+: RENT-DATA ( bid start duration -- data )
+    + TIME% SHIFTOR ;
+
 : RENT-EVENT ( start duration bid -- data key )
-    ROT DUP >R -ROT RENT EVENT-DATA RENT R> EVENT-KEY ;
-: CASH-EVENT ( start duration bid -- data key )
-    CASH EVENT-DATA CASH ROT EVENT-KEY ;
+    ROT DUP >R ROT RENT-DATA RENT% R> EVENT-KEY ;
+
+: CASH-EVENT ( start -- data key )
+    NO-DATA CASH% ROT EVENT-KEY ;
+
+: ADD-ORDER ( start duration bid -- )
+    >R 2DUP R> RENT-EVENT EVENTS ACT-INSERT
+    + CASH-EVENT EVENTS ACT-INSERT ;
+
+: INITIALIZE 
+    EVENT-ID OFF RENT-VALUE OFF
+    EVENTS ?DUP IF ACT-(FREE) THEN ACT-NEW ACT-EVENTS !
+    VALUES ?DUP IF HCT-(FREE) THEN 10000 HCT-NEW HCT-VALUES ! ;
+
+: TIME-KEY ( time -- addr c ) 
+    S>D <# #S #> ;
+
+: GET-VALUE ( time -- n )
+    TIME-KEY VALUES HCT-GET 0= IF 0 THEN ;
+
+: SET-VALUE ( n time -- )
+    TIME-KEY VALUES HCT-INSERT ;
+
+: RENT ( start end bid -- )
+    ROT GET-VALUE RENT-VALUE @ MAX + SWAP SET-VALUE ;
+
+: CASH ( start -- )
+    GET-VALUE RENT-VALUE @ MAX RENT-VALUE ! ;
+
+: EVENT ( start [end bid] kind -- )
+    RENT% = IF ['] RENT ELSE ['] CASH THEN 
+    EXECUTE ;
+
+: GET-EVENT ( data key -- start [end bid] kind )
+    KEY% RSHIFT
+    DUP KIND% AND >R KIND% RSHIFT
+    SWAP R@ IF DUP TIME-MASK% AND SWAP TIME% RSHIFT SWAP 
+    ELSE DROP THEN R> ;
+
+: RUN-EVENT ( data key -- )
+    GET-EVENT EVENT ;
+    
+: COMPUTE-VALUE
+    ['] RUN-EVENT EVENTS ACT-EXECUTE ;
+    
+
