@@ -95,4 +95,12 @@ VARIABLE HCT-VALUES
 : COMPUTE-VALUE
     ['] RUN-EVENT EVENTS ACT-EXECUTE ;
     
+: (.EVENT) ( start [end bid] kind )
+    RENT% = IF ROT . SWAP . . ." RENT" 
+    ELSE . ." CASH" THEN CR ;
+    
+: .EVENT ( data key -- )
+    GET-EVENT (.EVENT) ;
+: .EVENTS
+    ['] .EVENT EVENTS ACT-EXECUTE ;
 
