@@ -47,10 +47,18 @@ VARIABLE EVENTS
 : RENT-DATA ( time bid -- data )
     SWAP 24 LSHIFT OR ;
     
+: CASH-DATA ( -- 0 )
+    0 ;
+
+: RENT-EVENT ( start duration bid -- data key )
+    -ROT OVER + ROT RENT-DATA
+    RENT% EVENT-KEY ;
+
+: CASH-EVENT ( start duration -- data key )
+    CASH-DATA -ROT
+    + CASH% EVENT-KEY ;
+
 : ADD-ORDER ( start duration bid -- )
-    >R 2DUP + R> RENT-DATA 
-    2DUP DROP RENT% EVENT-KEY 
-    EVENTS @ ACT-INSERT
-    + CASH% EVENT-KEY 0 SWAP
-    EVENTS @ ACT-INSERT ;     
+    >R 2DUP R> RENT-EVENT EVENTS @ ACT-INSERT
+    CASH-EVENT EVENTS @ ACT-INSERT ;
 
