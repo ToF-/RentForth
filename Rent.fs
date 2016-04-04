@@ -58,7 +58,17 @@ VARIABLE EVENTS
     CASH-DATA -ROT
     + CASH% EVENT-KEY ;
 
+: ADD-EVENT ( data key -- )
+    EVENTS @ ACT-INSERT ;
+
 : ADD-ORDER ( start duration bid -- )
-    >R 2DUP R> RENT-EVENT EVENTS @ ACT-INSERT
-    CASH-EVENT EVENTS @ ACT-INSERT ;
+    >R 2DUP R> 
+    RENT-EVENT ADD-EVENT
+    CASH-EVENT ADD-EVENT ;
+
+: GET-EVENT ( key data -- time [bid] type )
+    SWAP 16 RSHIFT DUP 1 AND
+    DUP 1 16 LSHIFT 1- AND SWAP
+    16 RSHIFT DUP 1 AND SWAP
+    1 RSHIFT -ROT ;
 
