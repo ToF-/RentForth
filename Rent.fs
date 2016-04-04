@@ -35,8 +35,8 @@ VARIABLE EVENTS
 : CASH ( time )
     PLAN@ RENT-VALUE @ MAX RENT-VALUE ! ;
 
-: RUN-EVENT ( time [bid] type -- )
-    RENT% = IF  RENT ELSE CASH THEN ;
+: RUN-EVENT ( time bid type -- )
+    ?DUP IF  RENT ELSE CASH THEN ;
 
 : NEXT-ID ( -- id )
     EVENT-ID DUP @ 1 ROT +! ;
