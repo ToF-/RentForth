@@ -30,7 +30,7 @@ ACT-CREATE ACTIONS
 : PLAN! ( n time -- )
     TIME>STRING PLAN HCT-INSERT ;
 
-: RENT ( time bid -- )
+: RENT (  end bid -- )
     RENT-VALUE @ +
     OVER PLAN@ MAX
     SWAP PLAN! ;
@@ -38,30 +38,38 @@ ACT-CREATE ACTIONS
 : CASH ( time )
     PLAN@ RENT-VALUE @ MAX RENT-VALUE ! ;
 
-: DO-ACTION ( time bid type -- )
-    ?DUP IF RENT ELSE CASH THEN ;
-
-: ACTION>KEY ( start end bid -- k )
-    ROT 21 LSHIFT ROT OR 21 LSHIFT SWAP OR ;
+: DO-ACTION ( time end bid  -- )
+    ?DUP IF RENT DROP ELSE DROP CASH THEN ;
 
 1 21 LSHIFT 1- CONSTANT 21MASK
 
-: NEXT-FIELD ( k -- f k' )
-    DUP 21MASK AND SWAP 21 RSHIFT ;
+: <FIELD ( f k -- k' )
+    21 LSHiFT OR ;
+
+: >FIELD ( k -- f k' )
+    DUP 21MASK AND 
+    SWAP 21 RSHIFT ;
 
 : KEY>ACTION ( k -- start end bid )
-    NEXT-FIELD NEXT-FIELD SWAP ROT ;
+    >FIELD >FIELD SWAP ROT ;
+
+: ACTION>KEY ( start end bid -- k )
+    SWAP ROT <FIELD <FIELD ;
+
 
 : INSERT-ACTION ( start time bid -- )
     ACTION>KEY 0 SWAP ACTIONS ACT-INSERT ;
 
 : ADD-ORDER ( start duration bid )
     >R 2DUP OVER 
-    + R> INSERT-ACTION
+    + R>   INSERT-ACTION
     + 0 0  INSERT-ACTION ;
 
 : EXECUTE-ACTION ( d k -- )
-    SWAP DROP KEY>ACTION ROT DROP DO-ACTION ;
+    NIP KEY>ACTION DO-ACTION ;
+
+: print-act 
+    nip key>action ?dup if rot . swap . . ." RENT" else drop . ." CASH" then CR ;
 
 : COMPUTE-VALUE ( -- n )
     ['] EXECUTE-ACTION ACTIONS ACT-EXECUTE 
