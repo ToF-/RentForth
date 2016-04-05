@@ -8,15 +8,11 @@ REQUIRE ffl/act.fs
 1 CONSTANT RENT%
 VARIABLE HCT-PLAN
 VARIABLE RENT-VALUE
-VARIABLE EVENT-ID
-VARIABLE EVENTS
 
 : INITIALIZE
-    RENT-VALUE OFF EVENT-ID OFF
+    RENT-VALUE OFF
     HCT-PLAN @ ?DUP IF HCT-(FREE) THEN
-    MAX-ORDERS# HCT-NEW HCT-PLAN ! 
-    EVENTS @ ?DUP IF ACT-(FREE) THEN
-    ACT-NEW EVENTS ! ;
+    MAX-ORDERS# HCT-NEW HCT-PLAN ! ;
 
 : TIME>STRING ( n -- addr c )
     S>D <# #S #> ;
@@ -35,40 +31,16 @@ VARIABLE EVENTS
 : CASH ( time )
     PLAN@ RENT-VALUE @ MAX RENT-VALUE ! ;
 
-: RUN-EVENT ( time bid type -- )
-    ?DUP IF  RENT ELSE CASH THEN ;
+: DO-ACTION ( time bid type -- )
+    ?DUP IF RENT ELSE CASH THEN ;
 
-: NEXT-ID ( -- id )
-    EVENT-ID DUP @ 1 ROT +! ;
+: ACTION>KEY ( start end bid -- k )
+    ROT 21 LSHIFT ROT OR 21 LSHIFT SWAP OR ;
 
-: EVENT-KEY ( time type -- key )
-    SWAP 1 LSHIFT OR 15 LSHIFT NEXT-ID OR ;
+1 21 LSHIFT 1- CONSTANT 21MASK
 
-: RENT-DATA ( time bid -- data )
-    SWAP 24 LSHIFT OR ;
-    
-: CASH-DATA ( -- 0 )
-    0 ;
+: KEY>ACTION ( k -- start end bid )
+    DUP 21MASK AND SWAP 21 RSHIFT 
+    DUP 21MASK AND SWAP 21 RSHIFT SWAP ROT ;
 
-: RENT-EVENT ( start duration bid -- data key )
-    -ROT OVER + ROT RENT-DATA
-    RENT% EVENT-KEY ;
-
-: CASH-EVENT ( start duration -- data key )
-    CASH-DATA -ROT
-    + CASH% EVENT-KEY ;
-
-: ADD-EVENT ( data key -- )
-    EVENTS @ ACT-INSERT ;
-
-: ADD-ORDER ( start duration bid -- )
-    >R 2DUP R> 
-    RENT-EVENT ADD-EVENT
-    CASH-EVENT ADD-EVENT ;
-
-: GET-EVENT ( key data -- time [bid] type )
-    SWAP 16 RSHIFT DUP 1 AND
-    DUP 1 16 LSHIFT 1- AND SWAP
-    16 RSHIFT DUP 1 AND SWAP
-    1 RSHIFT -ROT ;
 
