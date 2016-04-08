@@ -12,7 +12,7 @@ REQUIRE Rent.fs
     10 CASH
     14 CASH
     15 CASH
-    T{ RENT-VALUE @ 18 ?S }T ; 
+    T{ PROFIT @ 18 ?S }T ; 
     
 
 TEST-PROCESSING-ACTIONS

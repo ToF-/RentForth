@@ -1,26 +1,26 @@
 \ Rent.fs
 
-VARIABLE RENT-VALUE 
+VARIABLE PROFIT 
 CREATE PLAN 100 CELLS ALLOT
 
 : INITIALIZE
     PLAN 100 CELLS ERASE
-    0 RENT-VALUE ! ;
+    0 PROFIT ! ;
 
 : PLAN# ( time -- addr )
     CELLS PLAN + ;
 
 : PLAN@ ( time -- n  )
-    PLAN# @ RENT-VALUE @ MAX ;
+    PLAN# @ PROFIT @ MAX ;
  
 : PLAN! ( n time -- )
     PLAN# DUP @ ROT MAX SWAP ! ;
  
 : CASH ( time -- )
-    PLAN@ RENT-VALUE ! ;
+    PLAN@ PROFIT ! ;
       
 : RENT ( end price -- )
-    RENT-VALUE @ + SWAP PLAN! ;
+    PROFIT @ + SWAP PLAN! ;
     
     
 
