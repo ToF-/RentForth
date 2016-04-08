@@ -239,8 +239,8 @@ Such a simple program :-)
     : RENT ( end price -- )
         PROFIT @ + SWAP PLAN! ;
 
-5. Reality
-----------
+5. Adapting to contraints
+-------------------------
 There is a problem with our approach: 
         
 > - Number of orders n: n ≤ 10000
@@ -303,4 +303,16 @@ Inserting a value in the plan is done almost in the same way than before:
 
 And the main words `CASH` and `RENT` are not modified.
 
+    : CASH ( time -- )
+        PLAN@ PROFIT ! ;
+          
+    : RENT ( end price -- )
+        PROFIT @ + SWAP PLAN! ;
+    
+6. Getting Orders, sorting Actions
+----------------------------------
 
+The ability to process sorted actions is fine, but how do we get here from a list of possibly unsorted orders ? Each order should generate two actions:
+
+- a RENT action that will take place at start time, aiming to insert the value of current profit + price at time: start + duration.
+- a CASH action that will take place at time: start+duration 
