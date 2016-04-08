@@ -176,10 +176,10 @@ Writing a value in the plan should never diminish the value at that time if it w
     : PLAN! ( n time -- )
         PLAN# DUP @ ROT MAX SWAP ! w
  
-When we evaluate the cash at a time, we take the value in the plan at that time, and update the current rent value if it's greater.
+When we evaluate the cash at a time, we update the current value wtih the value in the plan at that time if it's greater.
 
     : CASH ( time -- )
-        PLAN@ RENT-VALUE @ MAX RENT-VALUE ! ;
+        PLAN@ RENT-VALUE ! ;
 
 Finally, when we plan a rent at a given time, we take the current rent value, add the price of the order, and update the plan at that time if it's greater.
 
@@ -229,7 +229,7 @@ Such a simple program :-)
         PLAN# DUP @ ROT MAX SWAP ! ;
      
     : CASH ( time -- )
-        PLAN@ RENT-VALUE @ MAX RENT-VALUE ! ;
+        PLAN@ RENT-VALUE ! ;
           
     : RENT ( end price -- )
         RENT-VALUE @ + SWAP PLAN! ;

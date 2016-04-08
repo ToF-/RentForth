@@ -17,7 +17,7 @@ CREATE PLAN 100 CELLS ALLOT
     PLAN# DUP @ ROT MAX SWAP ! ;
  
 : CASH ( time -- )
-    PLAN@ RENT-VALUE @ MAX RENT-VALUE ! ;
+    PLAN@ RENT-VALUE ! ;
       
 : RENT ( end price -- )
     RENT-VALUE @ + SWAP PLAN! ;
