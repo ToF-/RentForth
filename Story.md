@@ -238,4 +238,69 @@ Such a simple program :-)
           
     : RENT ( end price -- )
         PROFIT @ + SWAP PLAN! ;
+
+5. Reality
+----------
+There is a problem with our approach: 
         
+> - Number of orders n: n ≤ 10000
+> - for each order:
+>     - start time st: 0 ≤ st \< 1000000
+>     - duration d: 0 \< d \< 1000000
+>     - price p: 0 \< p \< 100000
+
+Creating an array of 2000000 cells to store 10000 distinct values is not efficient. A better idea woud be to use a [hash table](http://irdvo.github.io/ffl/docs/hct.html). The library ffl offers such a thing. Here's how to use it:
+
+    require ffl/hct.fs
+    100 hct-create rivers 
+    6853 s" Niles"  rivers hct-insert   
+    6992 s" Amazon" rivers hct-insert  
+    1233 s" Rhine"  rivers hct-insert  
+
+    s" Niles" rivers hct-get cr . .
+    -1 6853  ok
+
+    s" Seine" rivers hct-get cr . 
+    0  ok
+
+As the hashtable associate data (a cell) with a string, we need to convert the time value into a string before inserting values into or getting values from the hashtable. The way to do this is to use the traditionnal forth words: 
+
+    : INT>STRING ( n -- addr # )
+        S>D <# #S #> ;
+    
+    4807 17 * INT>STRING DUMP
+    10F885E3D: 38 31 37 31  39          -                           81719
+
+Let's implement this. First we need to create a hast table rather than an array:
+
+    10000 CONSTANT MAXORDER#
+    MAXORDER# HCT-CREATE PLAN
+
+Our initialization word with (re-)init the plan as well:
+
+    : INITIALIZE
+        MAXORDER# PLAN HCT-INIT
+        0 PROFIT ! ;
+
+Access to a value of the plan is still done with `PLAN#`, but now this word's job is to convert the time value into a string and push the hashtable on the stack, ready for `HCT-GET` or `HCT-INSERT` to operate:
+
+    : INT>STR ( n -- addr # )
+        S>D <# #S #> ;
+
+    : PLAN# ( time -- addr # plan )
+       INT>STR PLAN ; 
+
+Now looking for a value in the plan is done via `HCT-GET` with a verification of the flag, pushing zero if it's false. 
+
+    : PLAN@ ( time -- n  )
+        PLAN# HCT-GET 0= IF 0 THEN PROFIT @ MAX ;
+
+Inserting a value in the plan is done almost in the same way than before:
+
+
+    : PLAN! ( n time -- )
+        DUP PLAN@ ROT MAX SWAP PLAN# HCT-INSERT ;
+
+And the main words `CASH` and `RENT` are not modified.
+
+

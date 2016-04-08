@@ -1,20 +1,25 @@
 \ Rent.fs
+REQUIRE ffl/hct.fs
 
 VARIABLE PROFIT 
-CREATE PLAN 100 CELLS ALLOT
+10000 CONSTANT MAXORDER#
+MAXORDER# HCT-CREATE PLAN
 
 : INITIALIZE
-    PLAN 100 CELLS ERASE
+    MAXORDER# PLAN HCT-INIT
     0 PROFIT ! ;
 
-: PLAN# ( time -- addr )
-    CELLS PLAN + ;
+: INT>STR ( n -- addr # )
+    S>D <# #S #> ;
+
+: PLAN# ( time -- addr # plan )
+   INT>STR PLAN ; 
 
 : PLAN@ ( time -- n  )
-    PLAN# @ PROFIT @ MAX ;
+    PLAN# HCT-GET 0= IF 0 THEN PROFIT @ MAX ;
  
 : PLAN! ( n time -- )
-    PLAN# DUP @ ROT MAX SWAP ! ;
+    DUP PLAN@ ROT MAX SWAP PLAN# HCT-INSERT ;
  
 : CASH ( time -- )
     PLAN@ PROFIT ! ;
