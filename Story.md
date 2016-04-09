@@ -354,4 +354,22 @@ the sorting criteria being time of action then type then parameters. We can very
         00000000 00000000 01010|0|00 00000000 00000000 000|00000 00000000 00000000
         00000000 00000000 01110|0|00 00000000 00000000 000|00000 00000000 00000000
 
+The following word:
+
+    : <<FIELD ( cell n #bits -- cell )
+        ROT SWAP LSHIFT OR ;
+
+Allows us to store a value on a number of bits into given cell, shifting the previous value on the left bits of the cell.
+For example:
+
+    4807 4 16 <<FIELD HEX . \ stores the value 4 on the lower 16 bits, shifting 4807 on the left
+    12C70004
+
+    0 1 8 <<FIELD 2 8 <<FIELD 3 8 <<FIELD HEX . \ stores value 1 2 and 3 on respectively bytes 2 1 and 0 of the cell
+    10203
+
+ 
+    4807 0 16 BIT-FIELD! HEX . \ stores 4807 on bits 16 to 32 of an initially empty cell  
+    12C70000 
+    3 2 1 0 4 BIT-FIELD! SWAP 8 BIT-FIELD! SWAP 12 BIT-FIELD! HEX . 
 
