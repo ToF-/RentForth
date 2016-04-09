@@ -341,35 +341,28 @@ the sorting criteria being time of action then type then parameters. We can very
 - 21 bits : action time
 -  1 bit  : action type
 - 21 bits : rent end time / no param
-- 21 bits : rent price / no param
-
-            action time        |t|      rent end time     |    rent price
-        -------  -------  ---------- -------- -------- --------- -------- --------
-        00000000 00000000 00000|1|00 00000000 00000000 101|00000 00000000 00001010
-        00000000 00000000 00011|1|00 00000000 00000001 000|00000 00000000 00001001
-        00000000 00000000 00011|1|00 00000000 00000001 010|00000 00000000 00001110
-        00000000 00000000 00101|0|00 00000000 00000000 000|00000 00000000 00000000
-        00000000 00000000 00101|1|00 00000000 00000001 110|00000 00000000 00000111
-        00000000 00000000 01000|0|00 00000000 00000000 000|00000 00000000 00000000
-        00000000 00000000 01010|0|00 00000000 00000000 000|00000 00000000 00000000
-        00000000 00000000 01110|0|00 00000000 00000000 000|00000 00000000 00000000
+- 17 bits : rent price / no param
 
 The following word:
 
-    : <<FIELD ( cell n #bits -- cell )
-        ROT SWAP LSHIFT OR ;
+    : <<FIELD ( n cell #bits -- cell' )
+        LSHIFT OR ;
 
-Allows us to store a value on a number of bits into given cell, shifting the previous value on the left bits of the cell.
-For example:
+Allows us to store a value on a number of bits into given cell, shifting the previous value on the left bits of the cell. Let's define specialized versions:
+    
+    : <<TYPE ( f cell -- cell' )
+        1 <<FIELD ;
 
-    4807 4 16 <<FIELD HEX . \ stores the value 4 on the lower 16 bits, shifting 4807 on the left
-    12C70004
+    : <<TIME ( t cell -- cell' )
+        21 <<FIELD ;
 
-    0 1 8 <<FIELD 2 8 <<FIELD 3 8 <<FIELD HEX . \ stores value 1 2 and 3 on respectively bytes 2 1 and 0 of the cell
-    10203
+    : <<PRICE ( p cell -- cell' )
+        17 <<FIELD ;
 
- 
-    4807 0 16 BIT-FIELD! HEX . \ stores 4807 on bits 16 to 32 of an initially empty cell  
-    12C70000 
-    3 2 1 0 4 BIT-FIELD! SWAP 8 BIT-FIELD! SWAP 12 BIT-FIELD! HEX . 
+Now we can encode an action given an order start time, duration and price:
+
+    : RENT-ACTION ( start duration price -- action )
+        -ROT OVER +     ( price start end )
+        1 ROT           ( price end 1 start )
+        1 <<FIELD 21 <<field 21 <<field ;
 
