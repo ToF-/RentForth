@@ -51,7 +51,7 @@ MAXORDER# HCT-CREATE PLAN
 : CASH-PARAMS ( start duration -- 0 0 end )
     + 0 0 ROT ; 
 
-: ORDER-ACTIONS ( start duration price -- action action )
+: ACTIONS ( start duration price -- action action )
     >R 2DUP R>
     RENT-PARAMS RENT% ACTION >R
     CASH-PARAMS CASH% ACTION R> ;
