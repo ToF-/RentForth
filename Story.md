@@ -312,7 +312,46 @@ And the main words `CASH` and `RENT` are not modified.
 6. Getting Orders, sorting Actions
 ----------------------------------
 
-The ability to process sorted actions is fine, but how do we get here from a list of possibly unsorted orders ? Each order should generate two actions:
+Processing sorted actions is fine, but how do we get here from a list of possibly unsorted orders ? Each order should generate two actions:
 
 - a RENT action that will take place at start time, aiming to insert the value of current profit + price at time: start + duration.
 - a CASH action that will take place at time: start+duration 
+
+The following orders:
+
+    0 5 10
+    3 5  9
+    3 7 14
+    5 9  7
+
+should generate the following list of sorted actions:
+
+    time type parameters
+     0   RENT  5  10
+     3   RENT  8   9
+     3   RENT 10  14
+     5   CASH --  --
+     5   RENT 14   7
+     8   CASH --  --
+    10   CASH --  --
+    14   CASH --  --
+
+the sorting criteria being time of action then type then parameters. We can very easily sort the actions if we store them as keys in an [avl tree](http://irdvo.github.io/ffl/docs/act.html). Each key is the size of a cell, i.e. 8 bytes. There we can store all the information needed :
+
+- 21 bits : action time
+-  1 bit  : action type
+- 21 bits : rent end time / no param
+- 21 bits : rent price / no param
+
+            action time        |t|      rent end time     |    rent price
+        -------  -------  ---------- -------- -------- --------- -------- --------
+        00000000 00000000 00000|1|00 00000000 00000000 101|00000 00000000 00001010
+        00000000 00000000 00011|1|00 00000000 00000001 000|00000 00000000 00001001
+        00000000 00000000 00011|1|00 00000000 00000001 010|00000 00000000 00001110
+        00000000 00000000 00101|0|00 00000000 00000000 000|00000 00000000 00000000
+        00000000 00000000 00101|1|00 00000000 00000001 110|00000 00000000 00000111
+        00000000 00000000 01000|0|00 00000000 00000000 000|00000 00000000 00000000
+        00000000 00000000 01010|0|00 00000000 00000000 000|00000 00000000 00000000
+        00000000 00000000 01110|0|00 00000000 00000000 000|00000 00000000 00000000
+
+
