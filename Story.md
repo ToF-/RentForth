@@ -83,10 +83,12 @@ So what we have to do rather than search the order list for the maximum value re
 
     Order(t,d,p) ⇒ A(t, P[t+d] := max(V,P[t]+p)), A(t+d, V := max(V,P[t+d]))
 
-If we process all the actions in the right order, i.e for each time
+If we process all the actions in the right sequencing, i.e for each time position
 
     - update the profit made so far
-    - plan the renting at ulterior time
+    - plan the ulterior profit made by rent at price + profit 
+
+then we end up with the max profit made with all the orders.
 
 3. A first, partial implementation
 ----------------------------------
@@ -146,8 +148,19 @@ How do we get from a sequence of orders to a sorted sequence of action? We could
 - sort the array (using action time, then type of action as sort criteria, with update-profit < plan-rent) 
 - traverse the array, executing all the action
 
+Each action will encoded in such a way that for a given time, update-profit action will be "lower" than plan-rent action. This can be done by multiplying the different parts of the action data by 10^12 and 10^6:
 
-Encoding an update-profit action can be done by 
+- action(update profit at t) = t * 1000000000000  
+- action(plan rent at t for d with price p) = t * 1000000000000 + (t+d) * 1000000 + p
+ 
+Those two words will encode actions:
+
+    : ENCODE-RENT-ACTION ( price time duration -- code )
+        OVER + SWAP ( price end time )
+        1000000000000 * SWAP 1000000 * + + ;
+ 
+    : ENCODE-UPDATE-ACTION ( time duration -- code )
+        + 100000000000 * ;
 
 
 
