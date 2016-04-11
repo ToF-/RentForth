@@ -9,14 +9,25 @@ ACT-CREATE PLAN
 : PLAN! ( value time -- ) PLAN ACT-INSERT ;
 : UPDATE-PROFIT ( time -- ) PLAN@ PROFIT @ MAX PROFIT ! ;
 : RENT ( time duration price -- ) -ROT + DUP PLAN@ ROT PROFIT @ + MAX SWAP PLAN! ;
+
+21 CONSTANT LONG
+17 CONSTANT SHORT
+
+: <FIELD! ( value cell #bits -- cell' )
+    LSHIFT OR ;
+
+: MASK ( cell #bits -- cell' )
+    1 SWAP LSHIFT 1- AND ;
+
+: >FIELD ( cell #bits -- value cell' )
+    2DUP MASK -ROT RSHIFT ; 
+
 : ACTION>KEY ( time duration price -- key ) 
     ?DUP 0= IF + 0 0 THEN
-    -ROT SWAP 21 LSHIFT OR 17 LSHIFT OR ;
+    SWAP ROT LONG <FIELD! SHORT <FIELD! ;
 
 : KEY>ACTION ( key -- time duration price ) 
-    DUP 17 RSHIFT DUP 21 RSHIFT 
-    SWAP 1 21 LSHIFT 1- AND 
-    ROT  1 17 LSHIFT 1- AND ;
+    SHORT >FIELD LONG >FIELD SWAP ROT ;
 
 
 
