@@ -139,35 +139,12 @@ And this should convince us that using the plan worked correctly:
     PLAN 5 + C@ . PLAN 10 + C@ . PLAN 14 + C@ . PLAN 15 + C@ .
     100 140 180 170 ok
 
-4. Generating sorted actions
+4. Using an associative container for actions
+---------------------------------------------
+
+
+5. Generating sorted actions
 ----------------------------
-
-How do we get from a sequence of orders to a sorted sequence of action? We could follow a plan like this:
-
-- for each order, generate and store the actions data and add this data into an array
-- sort the array (using action time, then type of action as sort criteria, with update-profit < plan-rent) 
-- traverse the array, executing all the action
-
-Each action will encoded in such a way that for a given time, update-profit action will be "lower" than plan-rent action. This can be done by multiplying the different parts of the action data by 10^12 and 10^6:
-
-- action(update profit at t) = t * 1000000000000  
-- action(plan rent at t for d with price p) = t * 1000000000000 + (t+d) * 1000000 + p
- 
-Those two words will encode actions:
-
-    : ENCODE-RENT-ACTION ( price time duration -- code )
-        OVER + SWAP ( price end time )
-        1000000000000 * SWAP 1000000 * + + ;
- 
-    : ENCODE-UPDATE-ACTION ( time duration -- code )
-        + 100000000000 * ;
-
-
-
-    
-    
-    
-
 
 
 
