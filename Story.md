@@ -100,25 +100,25 @@ Let's begin with a very simple implementation of this idea, removing or changing
 - price      : 0 < p < 150
 - we will process actions, not orders, and they are already given in the right order
 
-We need a variable to store the current profit, and an array to store the plan. We will limit the capacity to 100 time slots, from 0 to 99.
+We need a variable to store the current profit, and an array to store the plan. We will limit the capacity to 20 time slots, from 0 to 19.
 
     VARIABLE PROFIT 
 
 Given that in gforth, a cell is 8 bytes long, the phrase 
 
-    CREATE PLAN 20 ALLOT
+    CREATE PLAN 20 CELLS ALLOT
 
-will reserve 800 bytes for an array named PLAN. The following word erases the array and set the value to zero.
+will reserve 1600 bytes for an array named PLAN. The following word erases the array and set the value to zero.
 
-    : INITIALIZE PLAN 20 ERASE 0 PROFIT ! ;
+    : INITIALIZE PLAN 20 CELLS ERASE 0 PROFIT ! ;
 
 Updating profit at a given time is done very simply:
 
-    : UPDATE-PROFIT ( time -- ) PLAN + C@ PROFIT @ MAX PROFIT ! ;
+    : UPDATE-PROFIT ( time -- ) CELLS PLAN + @ PROFIT @ MAX PROFIT ! ;
 
 Planning a rent for a given time is simple too:
 
-    : PLAN-RENT ( price time -- ) PLAN + DUP C@ ROT PROFIT C@ + MAX SWAP C! ;
+    : PLAN-RENT ( price time -- ) CELLS PLAN + DUP @ ROT PROFIT @ + MAX SWAP ! ;
 
 Let's try our words:
 
@@ -135,7 +135,7 @@ Let's try our words:
     
 And this should convince us that using the plan worked correctly:
 
-    PLAN 5 + C@ . PLAN 10 + C@ . PLAN 14 + C@ . PLAN 15 + C@ . ⏎  100 140 180 170 ok
+    PLAN 5 + @ . PLAN 10 + @ . PLAN 14 + @ . PLAN 15 + @ . ⏎  100 140 180 170 ok
 
 4. Using an associative container for actions
 ---------------------------------------------
