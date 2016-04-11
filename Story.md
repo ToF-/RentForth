@@ -85,8 +85,8 @@ So what we have to do rather than search the order list for the maximum value re
 
 If we process all the actions in the right sequencing, i.e for each time position
 
-    - update the profit made so far
-    - plan the ulterior profit made by rent at price + profit 
+- update the profit made so far
+- plan the ulterior profit made by rent at price + profit 
 
 then we end up with the max profit made with all the orders.
 
@@ -122,26 +122,68 @@ Planning a rent for a given time is simple too:
 
 Let's try our words:
 
-    INITIALIZE
-    100 5  PLAN-RENT 
-    140 10 PLAN-RENT 
-        5  UPDATE-PROFIT 
-     80 14 PLAN-RENT 
-     70 15 PLAN-RENT 
-        10 UPDATE-PROFIT 
-        14 UPDATE-PROFIT 
-        15 UPDATE-PROFIT 
-    PROFIT ? 
-    180 ok
+    INITIALIZE ⏎ ok
+    100 5  PLAN-RENT ⏎ ok 
+    140 10 PLAN-RENT ⏎ ok 
+        5  UPDATE-PROFIT ⏎ ok 
+     80 14 PLAN-RENT ⏎ ok
+     70 15 PLAN-RENT ⏎ ok
+        10 UPDATE-PROFIT ⏎ ok
+        14 UPDATE-PROFIT ⏎ ok
+        15 UPDATE-PROFIT ⏎ ok
+    PROFIT ? ⏎ 180 ok
     
 And this should convince us that using the plan worked correctly:
 
-    PLAN 5 + C@ . PLAN 10 + C@ . PLAN 14 + C@ . PLAN 15 + C@ .
-    100 140 180 170 ok
+    PLAN 5 + C@ . PLAN 10 + C@ . PLAN 14 + C@ . PLAN 15 + C@ . ⏎  100 140 180 170 ok
 
 4. Using an associative container for actions
 ---------------------------------------------
 
+This program works, but it is not suited for the constraints of the request, because creating a two millions cells array simply doesn't work:
+
+    CREATE PLAN 2000000 CELLS ALLOT ⏎
+    :1: Dictionary overflow
+    CREATE PLAN 2000000 CELLS >>>ALLOT<<<
+    Backtrace:
+    $109FA98E0 throw
+
+And even if it worked, only 10% of that array would be used, which is obviously inefficient. Instead we can use an associative container that will allow us to map profit values on time keys. We will use an [avl tree](http://irdvo.github.io/ffl/docs/act.html) to do that. Here's how it works:
+
+    REQUIRE ffl/act.fs ⏎ ok
+    ACT-CREATE PLAN ⏎ ok 
+    1000 4807 PLAN ACT-INSERT ⏎ ok 
+    4807 PLAN ACT-GET . . ⏎ -1 1000 ok
+    3280 PLAN ACT-GET . ⏎ 0  ok
+
+Replacing the `PLAN` array by an avl involves requiring the avl source code:
+
+    REQUIRE ffl/act.fs
+
+We declare the plan and the profit variable:
+
+    VARIABLE PROFIT 
+    ACT-CREATE PLAN
+
+We have to intialize the plan, freeing the avl nodes from a possible previous use:
+
+    : INITIALIZE PLAN ACT-(FREE) 0 PROFIT ! ;
+
+Fetching a profit value is now done through the avl tree. If the node for a given time can't be found, the value returned should be zero.
+
+    : PLAN@ ( time -- value ) PLAN ACT-GET 0= IF 0 THEN ;
+
+Storing a profit value is also done using the avl tree:
+
+    : PLAN! ( value time -- ) PLAN ACT-INSERT ;
+
+And now we can adapt the action words:
+
+    : UPDATE-PROFIT ( time -- ) PLAN@ PROFIT @ MAX PROFIT ! ;
+    : PLAN-RENT ( price time -- ) DUP PLAN@ ROT PROFIT @ + MAX SWAP PLAN! ;
+
+And test the code with our example data.
+ 
 
 5. Generating sorted actions
 ----------------------------
