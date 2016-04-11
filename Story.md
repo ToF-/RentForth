@@ -182,11 +182,73 @@ And now we can adapt the action words:
     : UPDATE-PROFIT ( time -- ) PLAN@ PROFIT @ MAX PROFIT ! ;
     : PLAN-RENT ( price time -- ) DUP PLAN@ ROT PROFIT @ + MAX SWAP PLAN! ;
 
-And test the code with our example data.
- 
+And test the code with a new example involving large time values:
+
+    INITIALIZE ⏎ ok
+    1000  53282 PLAN-RENT ⏎ ok
+    1400 126500 PLAN-RENT ⏎ ok
+          53282 UPDATE-PROFIT ⏎ ok
+     800 143233 PLAN-RENT ⏎ ok
+     700 153282 PLAN-RENT ⏎ ok
+         126500 UPDATE-PROFIT ⏎ ok
+         143233 UPDATE-PROFIT ⏎ ok
+         153282 UPDATE-PROFIT ⏎ ok
+    PROFIT ? ⏎  1800 ok
 
 5. Generating sorted actions
 ----------------------------
 
+We have now solved the problem of respecting the data size constraint, but for our program to be complete, we still need to generate actions from orders, and to *sequence* these actions so that for a given time value, `UPDATE-PROFIT` will be executed before `PLAN-RENT`. Thus we need to somehow "store" actions into a collection-type structure, sort that structure according to right criteria, and then execute all the actions in order.
 
+As it happens, an AVL tree can perfectly be traversed in the order defined by its key values. The word `ACT-EXECUTE` will do that for us, provided we give him *what* to execute. 
+
+Suppose we have a tree with some keys-values associations in it:
+
+    ACT-CREATE MY-TREE ⏎ ok
+
+    1000 4807 MY-TREE ACT-INSERT ⏎ ok
+    2000   24 MY-TREE ACT-INSERT ⏎ ok
+    3000  352 MY-TREE ACT-INSERT ⏎ ok
+
+and a word to print key value pairs:
+
+    : .KEY-VALUE ( value key -- ) CR . ." => " . ; ⏎ ok
+
+then we can pass the *execution address* of the word `.KEY-VALUE` and have our tree execute this word for all the keys, in order.
+ 
+    ' .KEY-VALUE MY-TREE ACT-EXECUTE ⏎ 
+    24 => 2000
+    352 => 3000
+    4807 => 1000 ok
+
+The "tick" word ` ` ` is what makes this execution possible. 
+
+How do we encode the actions into ordered keys? We know that for any order with start time t, duration d and price p, there should be
+
+* a plan-rent action at time t, with 2 parameters t+d and p ready to be used by `PLAN-RENT` 
+* an update-profit action at time t+d, with no parameter needed because `UPDATE-PROFIT` will use t+d
+
+So we need to create a *compound key* with the values t, t+d, p (for a plan-rent action) or the values t+d,t+d,0 (for an update-profit action). One way to do this is to multiply the major parts of the key :
+
+* plan-rent:  K(t,d,p) = t * 100000000000 + (t+d) * 100000 + p (e.g. for 3 7 and 1400: 300001001400)
+* update-profit: K(t,d,p) = (t+d) * 100000000000  (e.g. for 3 7 and 1400: 1000000000000) 
+
+A more efficient way is to use binary left shifting instead of multiplication:
+
+* plan-rent: K(t,d,p) = t << 38 | (t+d)<< 17 | p
+* update-profit: K(t,d,p) = (t+d) << 38
+
+Let's create words to do that:
+
+    : RENT-ACTION ( time duration price -- key ) ROT 21 LSHIFT ROT OR 17 LSHIFT OR ;
+    : UPDATE-ACTION ( time duration -- key ) + 38 LSHIFT ;
+
+And the following example shows that the action key for updating at 3+5 is lower than the action key for renting at 8 even when duration and price are the lowest possible.
+
+    3 5 1 RENT-ACTION CR . 3 5 UPDATE-ACTION CR .  8 1 1 RENT-ACTION CR . ⏎ 
+    824634376193
+    2199023255552
+    2199023386625 ok
+
+As much as we can encode actions, we should be able to decode actions from the keys that the AVL tree will sort for us.
 
