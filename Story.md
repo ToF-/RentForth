@@ -1,7 +1,7 @@
 Rent your Airplane and Make Money
 =================================
-1.  The request
----------------
+1. A Request
+------------
 
 Here is what we received:
 
@@ -39,8 +39,9 @@ The constraints are as follow:
     - duration d: 0 \< d \< 1000000
     - price p: 0 \< p \< 100000
 
-2. Finding the formula
-----------------------
+
+2. The Formula
+--------------
 
 We can determine the profit of a list of N orders using this formula:o
 
@@ -76,29 +77,31 @@ Applied to our example:
     Order(6,9, 70) ⇒ P(15) ≥ P(6)+70 ⇒ P(15) ≥ 170
                      P(15) ≥ P(14) ⇒ P(15) ≥ 180 
 
-So what we have to do rather than search the order list for the maximum value recursively, is to process each calcultation at the right time. Each order generates two actions to process:
+So what we have to do rather than search the order list for the maximum value recursively, is to process each calcultation at the right time. Each order t,d,p generates two actions to process:
 
-- plan the renting at time t and updating the profit planned at t+d
-- update the profit made so far at t+d
+- at time t, renting the airplane, thus planning a profit increase by p, at time t+d 
+- at time t+d, update the profit made so far 
 
-    Order(t,d,p) ⇒ A(t, P[t+d] := max(V,P[t]+p)), A(t+d, V := max(V,P[t+d]))
 
-If we process all the actions in the right sequencing, i.e for each time position
+    Order(t,d,p) ⇒ A(t, P[t + d] := max(V, P[t] + p)), A(t + d, V := max(V, P[t + d]))
 
-- update the profit made so far
-- plan the ulterior profit made by rent at price + profit 
+If we take all these actions generated through each order, and execute them in the right sequencing, i.e for each time position
 
-then we end up with the max profit made with all the orders.
+1. update the profit made so far
+2. plan the ulterior profit made by rent at price + profit 
 
-3. A first, partial implementation
-----------------------------------
+then we end up with the maximum profit made with all the orders.
+
+3. First Approach
+-----------------
 
 Let's begin with a very simple implementation of this idea, removing or changing some of the constraints in the initial problem:
 
-- start time : 0 ≦ s < 50
-- duration   : 0 < d < 50 
-- price      : 0 < p < 150
-- we will process actions, not orders, and they are already given in the right order
+1. small numbers only:
+    - start time : 0 ≦ s < 50
+    - duration   : 0 < d < 50 
+    - price      : 0 < p < 150
+2. simplified problem: we calculate the profit not from a list of orders but from an already sorted sequence of renting and updating actions.
 
 We need a variable to store the current profit, and an array to store the plan. We will limit the capacity to 20 time slots, from 0 to 19.
 
@@ -118,16 +121,16 @@ Updating profit at a given time is done very simply:
 
 Planning a rent for a given time is simple too:
 
-    : PLAN-RENT ( price time -- ) CELLS PLAN + DUP @ ROT PROFIT @ + MAX SWAP ! ;
+    : RENT-AIRPLANE ( price time -- ) CELLS PLAN + DUP @ ROT PROFIT @ + MAX SWAP ! ;
 
 Let's try our words:
 
     INITIALIZE ⏎ ok
-    100 5  PLAN-RENT ⏎ ok 
-    140 10 PLAN-RENT ⏎ ok 
+    100 5  RENT-AIRPLANE ⏎ ok 
+    140 10 RENT-AIRPLANE ⏎ ok 
         5  UPDATE-PROFIT ⏎ ok 
-     80 14 PLAN-RENT ⏎ ok
-     70 15 PLAN-RENT ⏎ ok
+     80 14 RENT-AIRPLANE ⏎ ok
+     70 15 RENT-AIRPLANE ⏎ ok
         10 UPDATE-PROFIT ⏎ ok
         14 UPDATE-PROFIT ⏎ ok
         15 UPDATE-PROFIT ⏎ ok
@@ -154,7 +157,7 @@ And even if it worked, only 10% of that array would be used, which is obviously 
     ACT-CREATE PLAN ⏎ ok 
     1000 4807 PLAN ACT-INSERT ⏎ ok 
     4807 PLAN ACT-GET . . ⏎ -1 1000 ok
-    3280 PLAN ACT-GET . ⏎ 0  ok
+    3280 PLAN ACT-GET . ⏎ 0  okw
 
 Replacing the `PLAN` array by an avl involves requiring the avl source code:
 
@@ -179,26 +182,35 @@ Storing a profit value is also done using the avl tree:
 
 And now we can adapt the action words:
 
-    : UPDATE-PROFIT ( time -- ) PLAN@ PROFIT @ MAX PROFIT ! ;
-    : PLAN-RENT ( price time -- ) DUP PLAN@ ROT PROFIT @ + MAX SWAP PLAN! ;
+    : UPDATE-PROFIT ( time -- ) PLAN@ PROFIT @ MAX  PROFIT ! ;
+    : RENT-AIRPLANE ( time duration price -- )
+         -ROT + DUP PLAN@               ( price end P[end] )
+         ROT PROFIT @ +                 ( end p[end] profit+price )
+         MAX SWAP PLAN! ;
 
 And test the code with a new example involving large time values:
 
     INITIALIZE ⏎ ok
-    1000  53282 PLAN-RENT ⏎ ok
-    1400 126500 PLAN-RENT ⏎ ok
-          53282 UPDATE-PROFIT ⏎ ok
-     800 143233 PLAN-RENT ⏎ ok
-     700 153282 PLAN-RENT ⏎ ok
-         126500 UPDATE-PROFIT ⏎ ok
-         143233 UPDATE-PROFIT ⏎ ok
-         153282 UPDATE-PROFIT ⏎ ok
+    1000  500000 RENT-AIRPLANE ⏎ ok
+    1400 1000000 RENT-AIRPLANE ⏎ ok
+          500000 UPDATE-PROFIT ⏎ ok
+     800 1400000 RENT-AIRPLANE ⏎ ok
+     700 1500000 RENT-AIRPLANE ⏎ ok
+         1000000 UPDATE-PROFIT ⏎ ok
+         1400000 UPDATE-PROFIT ⏎ ok
+         1500000 UPDATE-PROFIT ⏎ ok
     PROFIT ? ⏎  1800 ok
+
+5. Sequencing Actions
+---------------------
+6. The Main Program
+-------------------
+
 
 5. Generating sorted actions
 ----------------------------
 
-We have now solved the problem of respecting the data size constraint, but for our program to be complete, we still need to generate actions from orders, and to *sequence* these actions so that for a given time value, `UPDATE-PROFIT` will be executed before `PLAN-RENT`. Thus we need to somehow "store" actions into a collection-type structure, sort that structure according to right criteria, and then execute all the actions in order.
+We have now solved the problem of respecting the data size constraint, but for our program to be complete, we still need to generate actions from orders, and to *sequence* these actions so that for a given time value, `UPDATE-PROFIT` will be executed before `RENT-AIRPLANE`. Thus we need to somehow "store" actions into a collection-type structure, sort that structure according to right criteria, and then execute all the actions in order.
 
 As it happens, an AVL tree can perfectly be traversed in the order defined by its key values. The word `ACT-EXECUTE` will do that for us, provided we give him *what* to execute. 
 
@@ -225,7 +237,7 @@ The "tick" word ` ` ` is what makes this execution possible.
 
 How do we encode the actions into ordered keys? We know that for any order with start time t, duration d and price p, there should be
 
-* a plan-rent action at time t, with 2 parameters t+d and p ready to be used by `PLAN-RENT` 
+* a plan-rent action at time t, with 2 parameters t+d and p ready to be used by `RENT-AIRPLANE` 
 * an update-profit action at time t+d, with no parameter needed because `UPDATE-PROFIT` will use t+d
 
 So we need to create a *compound key* with the values t, t+d, p (for a plan-rent action) or the values t+d,t+d,0 (for an update-profit action). One way to do this is to multiply the major parts of the key :

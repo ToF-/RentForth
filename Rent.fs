@@ -9,8 +9,9 @@ ACT-CREATE ACTIONS
 : PLAN@ ( time -- value ) PLAN ACT-GET 0= IF 0 THEN ;
 : PLAN! ( value time -- ) PLAN ACT-INSERT ;
 : UPDATE-PROFIT ( time -- ) PLAN@ PROFIT @ MAX PROFIT ! ;
+: UPDATE-PLAN ( value time -- ) DUP PLAN@ ROT MAX SWAP PLAN! ;
 : RENT-AIRPLANE ( time duration price -- )
-     -ROT + DUP PLAN@ ROT PROFIT @ + MAX SWAP PLAN! ;
+    PROFIT @ +  -ROT + UPDATE-PLAN ;
 
 21 CONSTANT LONG
 17 CONSTANT SHORT
