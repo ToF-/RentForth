@@ -13,18 +13,20 @@ ACT-CREATE ACTIONS
 : RENT-AIRPLANE ( time duration price -- )
     PROFIT @ +  -ROT + UPDATE-PLAN ;
 
+: <FIELD ( value cell #bits -- cell' ) LSHIFT OR ;
+
 21 CONSTANT LONG
 17 CONSTANT SHORT
 
-: <FIELD ( value cell #bits -- cell' ) LSHIFT OR ;
+: (ACTION>KEY) ( time duration price -- key )
+    SWAP ROT LONG <FIELD SHORT <FIELD ;
+
+: ACTION>KEY ( time duration price -- key ) 
+    ?DUP 0= IF + NIL NIL THEN (ACTION>KEY) ;
 
 : MASK ( cell #bits -- cell' ) 1 SWAP LSHIFT 1- AND ;
 
 : >FIELD ( cell #bits -- value cell' ) 2DUP MASK -ROT RSHIFT ; 
-
-: ACTION>KEY ( time duration price -- key ) 
-    ?DUP 0= IF + NIL NIL THEN
-    SWAP ROT LONG <FIELD SHORT <FIELD ;
 
 : KEY>ACTION ( key -- time duration price )
     SHORT >FIELD LONG >FIELD SWAP ROT ;
