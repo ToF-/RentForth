@@ -24,9 +24,9 @@ ACT-CREATE ACTIONS
 : ACTION>KEY ( time duration price -- key ) 
     ?DUP 0= IF + NIL NIL THEN (ACTION>KEY) ;
 
-: MASK ( cell #bits -- cell' ) 1 SWAP LSHIFT 1- AND ;
+: MASK ( #bits -- mask ) -1 SWAP LSHIFT INVERT ;
 
-: >FIELD ( cell #bits -- value cell' ) 2DUP MASK -ROT RSHIFT ; 
+: >FIELD ( cell #bits -- value cell' ) 2DUP MASK AND -ROT RSHIFT ; 
 
 : KEY>ACTION ( key -- time duration price )
     SHORT >FIELD LONG >FIELD SWAP ROT ;

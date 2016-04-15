@@ -282,7 +282,7 @@ For our action cell, we need the price value to go on the 17 lowest bits, then t
 If we try this and print the result in binary, we can see how the value 3 ( 11 ), 7 (111) and 14 (1110) were stored on the key:
 
     3 7 14 (ACTION>KEY) 2 base ! CR .  ⏎  
-    1100000000000000000011100000000000001110 ok
+    1100000000000000000000000000000011100000000000000000001110    
 
 The way we will encode rent-airplane actions and update-profit actions is different: 
 
@@ -292,9 +292,9 @@ The way we will encode rent-airplane actions and update-profit actions is differ
 This is based on the following rules :
 
 - for a given time, the update-plan action always precede any rent-airplane action.
-- an update-plan action doesn't have a price parameter.
+- an update-plan action has 0 as price parameter.
 
-Consequently, the word `ACTION>KEY` will first check for the type of action, reset the parameters to 0 for a update-plan action, and then execute the helper word:
+Consequently, the word `ACTION>KEY` will t check for the type of action, reset the parameters to 0 for a update-plan action, and then execute the helper word:
 
     : ACTION>KEY ( time duration price -- key )
         ?DUP 0= IF + NIL NIL THEN (ACTION>KEY) ;
@@ -303,3 +303,50 @@ If we try to encore an update-plan action (t,d,0) we can see that the key t+d = 
 
     3 7 0 ACTION>KEY  2 base ! CR .  ⏎  
     101000000000000000000000000000000000000000  ok
+
+###5.3 Retrieving action parameters from keyw
+The operation that is the reverse of  `<FIELD`, extracting a field from a cell value, consists in two steps:
+- duplicating the cell 
+- masking a that cell with 1s for the number of bits, so that the rest of the bits of the cell are ignored
+- shifting the original cell on the right for the number of bits, so that the cell is ready for the next extraction
+
+For example given the cell value 235 ( 11101011 ) we want to extract the next 4-bits field:  
+
+    DUP      ( 11101011 11101011 )
+    1111 AND ( 11101011 1011 )
+    SWAP     ( 1011 11101011 )
+    4 RSHIFT ( 1011 1110 )
+
+The bit mask for a field of length N is done by shifting the value -1 (111111....1111111111) N times on the left, leaving 0s, then inverting the value:
+
+    : MASK ( #bits -- mask )
+        -1 SWAP LSHIFT INVERT ;
+
+    3 MASK . ⏎  7 ok
+    4 MASK . ⏎  15 ok
+    8 MASK . ⏎  255 ok
+
+Extracting a n bits field from a cell is done by duplicating the cell and bit length, masking the cell to obtain the value, then shifting the cell on the right.
+
+    : >FIELD ( cell #bits -- value cell' )
+        2DUP MASK AND
+        -ROT RSHIFT ;
+
+Here also, the way of ordering the parameters returned on the stack allows us to chain field extractions:
+
+For example if we want to extract the 8-bits values 1 2 3 from a cell we write:
+
+    hex 010203 8 >FIELD 8 >FIELD . . . ⏎  1 2 3  ok
+
+Retrieving the action parameters from an action key is done with the word `KEY>ACTION`:
+
+    : KEY>ACTION ( key -- time duration price )
+        SHORT >FIELD LONG >FIELD SWAP ROT ;
+
+Let's test this by retrieving the parameters 3 7 14 from an action key:
+
+
+    3 7 14 ACTION>KEY KEY>ACTION CR . . . ⏎ 
+    14 7 3 ok
+
+ 
