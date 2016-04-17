@@ -11,18 +11,19 @@ ACT-CREATE ACTIONS
 : UPDATE-PROFIT ( time -- ) PLAN@ PROFIT @ MAX PROFIT ! ;
 : UPDATE-PLAN ( value time -- ) DUP PLAN@ ROT MAX SWAP PLAN! ;
 : RENT-AIRPLANE ( time duration price -- )
-    PROFIT @ +  -ROT + UPDATE-PLAN ;
+    ROT DUP UPDATE-PROFIT -ROT
+    ?DUP IF PROFIT @ +  -ROT + UPDATE-PLAN ELSE 2DROP THEN ;
 
 : <FIELD ( value cell #bits -- cell' ) LSHIFT OR ;
 
 21 CONSTANT LONG
 17 CONSTANT SHORT
 
-: (ACTION>KEY) ( time duration price -- key )
+: (ACTION-KEY) ( time duration price -- key )
     SWAP ROT LONG <FIELD SHORT <FIELD ;
 
-: ACTION>KEY ( time duration price -- key ) 
-    ?DUP 0= IF + NIL NIL THEN (ACTION>KEY) ;
+: ACTION>KEY ( time duration price -- key )
+    ?DUP 0= IF + 0 0 THEN (ACTION-KEY) ;
 
 : MASK ( #bits -- mask ) -1 SWAP LSHIFT INVERT ;
 
@@ -38,8 +39,7 @@ ACT-CREATE ACTIONS
      ROT        ACTION>KEY ADD-ACTION ;
 
 : EXEC-ACTION ( data key -- ) 
-    KEY>ACTION ?DUP IF RENT-AIRPLANE 
-    ELSE DROP UPDATE-PROFIT THEN DROP ;
+    KEY>ACTION RENT-AIRPLANE DROP ;
 
 : CALC-PROFIT ( -- )
     ['] EXEC-ACTION ACTIONS ACT-EXECUTE ;

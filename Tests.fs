@@ -11,19 +11,18 @@ REQUIRE ffl/tst.fs
     ." rent action followed by update profit should increase profit" CR
     INITIALIZE
     3 7 140 RENT-AIRPLANE
-    10      UPDATE-PROFIT
+    10 0 0  RENT-AIRPLANE
     T{ PROFIT @ 140 ?S }T 
 
     ." rent actions correctly sequenced should determine max profit" CR
     INITIALIZE
     0 5 100 RENT-AIRPLANE
     3 7 140 RENT-AIRPLANE
-    5       UPDATE-PROFIT
     5 9  80 RENT-AIRPLANE
     6 9  70 RENT-AIRPLANE
-    10      UPDATE-PROFIT
-    14      UPDATE-PROFIT
-    15      UPDATE-PROFIT
+    10 0  0 RENT-AIRPLANE
+    14 0  0 RENT-AIRPLANE
+    15 0  0 RENT-AIRPLANE
     T{ PROFIT @ 180 ?S }T
 
     ." rent action should be composed and decomposed" CR
@@ -41,7 +40,7 @@ REQUIRE ffl/tst.fs
     INITIALIZE
     T{ ACTIONS ACT-LENGTH@ 0 ?S }T 
 
-    ." adding order generates actions" CR
+    ." adding order generates 2 actions" CR
     INITIALIZE
     3 7 140 ADD-ORDER
     T{ ACTIONS ACT-LENGTH@ 2 ?S }T

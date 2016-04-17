@@ -130,14 +130,14 @@ Planning a rent for a given time, duration and price is done by adding the price
 Let's try our words:
 
     INITIALIZE ⏎ ok
-    100 5  RENT-AIRPLANE ⏎ ok 
-    140 10 RENT-AIRPLANE ⏎ ok 
-        5  UPDATE-PROFIT ⏎ ok 
-     80 14 RENT-AIRPLANE ⏎ ok
-     70 15 RENT-AIRPLANE ⏎ ok
-        10 UPDATE-PROFIT ⏎ ok
-        14 UPDATE-PROFIT ⏎ ok
-        15 UPDATE-PROFIT ⏎ ok
+    0 5 100 RENT-AIRPLANE ⏎ ok 
+    3 7 140 RENT-AIRPLANE ⏎ ok 
+          5 UPDATE-PROFIT ⏎ ok 
+    5 9  80 RENT-AIRPLANE ⏎ ok
+    6 9  70 RENT-AIRPLANE ⏎ ok
+         10 UPDATE-PROFIT ⏎ ok
+         14 UPDATE-PROFIT ⏎ ok
+         15 UPDATE-PROFIT ⏎ ok
     PROFIT ? ⏎ 180 ok
     
 And this should convince us that using the plan worked correctly:
@@ -145,8 +145,8 @@ And this should convince us that using the plan worked correctly:
     CR PLAN 5 + @ . PLAN 10 + @ . PLAN 14 + @ . PLAN 15 + @ . ⏎ 
     100 140 180 170 ok
 
-4. Storing the Plan in a AVL tree
----------------------------------
+4. Storing the Plan in an AVL tree
+----------------------------------
 
 Of course this implementation is not suited for the constraints of the request, because creating a two millions cells array simply doesn't work:
 
@@ -241,7 +241,7 @@ then we can pass the *execution address* of the word `.KEY-VALUE` and have our t
 The "tick" word ` ` ` is what makes this execution possible. 
 ###5.2 Creating composite keys from actions
 
-The problem is now to encode the action information into one cell, creating at composite key that will respect the ordering of sequence that we need. How do we do that?
+The problem is now to encode the action information into one cell, creating a composite key that will respect the ordering of sequence that we need. How do we do that?
 
 We know that for any order with start time t, duration d and price p, there should be
 
@@ -304,7 +304,7 @@ If we try to encore an update-plan action (t,d,0) we can see that the key t+d = 
     3 7 0 ACTION>KEY  2 base ! CR .  ⏎  
     101000000000000000000000000000000000000000  ok
 
-###5.3 Retrieving action parameters from keyw
+###5.3 Retrieving action parameters from key
 The operation that is the reverse of  `<FIELD`, extracting a field from a cell value, consists in two steps:
 - duplicating the cell 
 - masking a that cell with 1s for the number of bits, so that the rest of the bits of the cell are ignored
