@@ -54,7 +54,7 @@ VARIABLE RENT-VALUE
 : PERFORM-OPERATION ( t d p -- ) 
     DO-CASH ?DUP IF DO-PLAN ELSE 2DROP THEN ;
 
-\ we store an operation on a 63 bits key:
+\ we store an operation on a 63 bits 
 \ | 25 bits | 21 bits  | 17 bits |
 \ |  time   | duration |  price  |
 
@@ -69,34 +69,35 @@ VARIABLE RENT-VALUE
 : >>OPERATION ( n o b -- o' ) 
     LSHIFT OR ;
 
-\ extract b bits from key into value n then shift key
+\ extract b bits from op into value n then shift op
 : OPERATION>> ( k b -- n k' ) 
     2DUP MASK AND -ROT RSHIFT ; 
 
-\ encode time duration and price in a key 
+\ encode time duration and price in an operation 
 : >OPERATION ( t d p -- k )
     SWAP ROT #DURATION >>OPERATION #PRICE >>OPERATION ;
 
-\ extract time, duration and price from a key
+\ extract time, duration and price from an operation
 : OPERATION> ( k -- t d p )
     #PRICE OPERATION>> #DURATION OPERATION>> SWAP ROT ;
 
-: OPERATIONS-! ( t d p  -- )
+\ store time duration and price as an operation 
+: OPERATIONS! ( t d p  -- )
     >OPERATION NIL SWAP
     OPERATIONS ACT-INSERT ;
 
 \ transform an order into a cash operation 
 : CASH-TYPE ( t d -- t d p ) + 0 0 ;
 
-\ this definition for symmetry ) 
+\ this definition for symmetry  
 : RENT-TYPE ( t d p -- t d p ) ;
 
-\ store the cash and rent operations for an order ) 
+\ store the cash and rent operations for an order  
 : ADD-ORDER ( t d p -- ) 
-    -ROT 2DUP CASH-TYPE OPERATIONS-!
-     ROT      RENT-TYPE OPERATIONS-! ;
+    -ROT 2DUP CASH-TYPE OPERATIONS!
+     ROT      RENT-TYPE OPERATIONS! ;
 
-\ execute operation as retrieved in the tree ) 
+\ execute operation as retrieved in the tree  
 : EXECUTE-OPERATION ( n k -- ) 
     OPERATION> PERFORM-OPERATION DROP ;
 
