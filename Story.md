@@ -43,7 +43,7 @@ The constraints are as follow:
 2. The Formula
 --------------
 
-We can determine the profit of a list of N orders using this formula:o
+We can determine the profit of a list of N orders using this formula
 
 M = maximum { P(i),P(i+1),..P(n) }
 
