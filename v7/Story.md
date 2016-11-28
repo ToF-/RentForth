@@ -77,16 +77,28 @@ Applied to our example:
     Order(6,9, 70) ⇒ P(15) ≥ P(6)+70 ⇒ P(15) ≥ 170
                      P(15) ≥ P(14) ⇒ P(15) ≥ 180 
 
-Rather than searching the order list for the maximum value recursively, we can process each calculation at the right time, while keeping track of the profit made so far. Each order(t,d,p) involve two Operations
+Rather than searching the order list for the maximum value recursively, we can process each calculation at the right time, while keeping track of the profit made so far. Each Order(s,d,p) involve two Operations:
 
-- at time t, plan the renting the airplane, thus writing a profit increase by p at time t+d
-- at time t+d, update V the profit value made so far
-
-
-    Order(t,d,p) ⇒ Operation(t, P[t+d] := max(V, P[t]+p)), Operation(t+d, V := max(V, P[t+d]))
+- at time s, plan to *rent* the airplane, thus writing a profit value increased by p at time s+d
+- at time s+d, plan to  *cash* update V the profit value made so far
 
 
-Given a sequence of Actions that is ordered on t, if we execute each Operation:
+    Order(s,d,p) ⇒ Operation(s, P[s+d] := max(V, P[s]+p)), Operation(s+d, V := max(V, P[s+d]))
+
+Thus the algorithm for computing the solution is:
+
+- initialize list of Operations to empty
+- for each Order(s,d,p):
+    - add an Operation at time s+d, of type Cash
+    - add an Operation at time s, of type Rent, with duration d and price p
+- initialize table Profit to empty
+- set V to 0
+- for each Operation(t,k,d,p) ordered by t + k (with Cash < Rent)
+    - if k = Cash : update V <- max(V,Profit[t])
+    - if k = Rent : update Profit[t+d] <- max(Profit[t]+p, V)
+         
+ 
+Given a sequence of Operations ordered on t, if we execute each Operation:
 
 1. update the profit value made so far
 2. plan the ulterior profit made by rent at price + profit 
