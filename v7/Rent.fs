@@ -98,11 +98,12 @@ VARIABLE RENT-VALUE
      ROT      RENT-TYPE OPERATIONS! ;
 
 \ execute operation as retrieved in the tree  
-: EXECUTE-OPERATION ( n k -- ) 
+: DECODE-AND-PERFORM ( n k -- ) 
     OPERATION> PERFORM-OPERATION DROP ;
 
+' DECODE-AND-PERFORM CONSTANT EXECUTE-OPERATION
 \ given operations stored after adding orders, compute rent value 
 : CALC-RENT-VALUE ( -- ) 
-    ['] EXECUTE-OPERATION OPERATIONS ACT-EXECUTE ;
+    EXECUTE-OPERATION OPERATIONS ACT-EXECUTE ;
 
 

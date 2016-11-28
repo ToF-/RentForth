@@ -77,17 +77,69 @@ Applied to our example:
     Order(6,9, 70) ⇒ P(15) ≥ P(6)+70 ⇒ P(15) ≥ 170
                      P(15) ≥ P(14) ⇒ P(15) ≥ 180 
 
-Rather than searching the order list for the maximum value recursively, we can process each calculation at the right time, while keeping track of the profit made so far. Each order(t,d,p) involve two Actions:
+Rather than searching the order list for the maximum value recursively, we can process each calculation at the right time, while keeping track of the profit made so far. Each order(t,d,p) involve two Operations
 
 - at time t, plan the renting the airplane, thus writing a profit increase by p at time t+d
 - at time t+d, update V the profit value made so far
 
-    Order(t,d,p) ⇒ Action(t, P[t+d] := max(V, P[t]+p)), Action(t+d, V := max(V, P[t+d]))
 
-Given a sequence of Actions that is ordered on t, if we execute each Action:
+    Order(t,d,p) ⇒ Operation(t, P[t+d] := max(V, P[t]+p)), Operation(t+d, V := max(V, P[t+d]))
+
+
+Given a sequence of Actions that is ordered on t, if we execute each Operation:
 
 1. update the profit value made so far
 2. plan the ulterior profit made by rent at price + profit 
 
 then we end up with the maximum profit value made with all the orders.
+
+3. Mapping time to money
+------------------------
+
+We want to solve this problem in Forth, using gforth. In addition to the standard data structures (a stack of 64 bits words and a dictionnary for our variables) we need to be able to map a time value to a money value. If time values were not so large, Using standard memory with `ALLOT` would be quite possible:
+
+    2000 CONSTANT MAX-TIME
+    CREATE PROFIT MAX-TIME CELLS ALLOT
+    PROFIT MAX-TIME CELLS ERASE
+
+    : PROFIT! ( n t --    store profit n at time t )
+        CELLS PROFIT + ! ;
+
+    : PROFIT@ ( t -- n    retrieve profit a time t )
+        CELLS PROFIT + @ ;
+
+    4807 500 PROFIT!
+    500 PROFIT@ .
+    4807 ok
+
+But time values can be as large as 2000000, so that solution won't work:
+
+	2000000 CONSTANT MAX-TIME  ok
+	CREATE PROFIT MAX-TIME CELLS ALLOT
+	:2: Dictionary overflow
+	CREATE PROFIT MAX-TIME CELLS >>>ALLOT<<<
+	Backtrace:
+	$10568E8E0 throw
+
+Besides, using such large dictionary space for only 10000 entries at last would be wasteful.
+
+Enters `act` a module from the Forth Foundation Library. This module provides us with the ability to store key/values in AVL trees.
+
+	REQUIRE ffl/act.fs
+
+	ACT-CREATE PROFITS
+
+	: PROFIT! ( n t --    store profit n at time t )
+		PROFITS ACT-INSERT ;
+
+	: PROFIT@ ( t -- n    retrieve profit a time t or 0 if not found )
+		PROFITS ACT-GET 0= IF 0 THEN ;
+
+	4807 500000 PROFIT! ⏎
+	ok
+	500000 PROFIT@ . ⏎
+	4807  ok
+	234 PROFIT@ . ⏎ 
+	0  ok 
+
 
