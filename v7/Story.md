@@ -45,86 +45,160 @@ The constraints are as follow:
 
 We can determine the profit of a list of N orders using this formula
 
-S = maximum { Vi,Vi+1,..Vn }
+V = maximum { Pi,Pi+1,..Pn }
  
-Vi = p(i) + maximum { Vj | j=1..n, t(j) >= t(i)+d(i) }
+Pi = p(i) + maximum { Pj | j=1..n, t(j) >= t(i)+d(i) }
 
-where t(i),d(i) and p(i) = the start time, duration and price for Order(i)
+where t(i),d(i) and p(i) = the start time, duration and price for an order(i)
 
 Applied to the example above:
 
-    S = maximum { V(1),V(2),V(3),V(4) }
+    V = maximum { P(1),P(2),P(3),P(4) }
 
-    V(1) = 100 + maximum { V(3),V(4) }
-         = 100 + maximum { 70 + maximum { }, 80 + maximum { } }
+    P(1) = 100 + maximum { P(3),P(4) }
+         = 100 + maximum { 80 + maximum { }, 70 + maximum { } }
          = 180
-    V(2) = 140  + maximum { }
-    V(3) = 80  + maximum { }
-    V(4) = 70  + maximum { }
+    P(2) = 140  + maximum { }
+    P(3) = 80  + maximum { }
+    P(4) = 70  + maximum { }
+    V    = 180
 
 Infortunately this formula is not practical as the computation would require N! comparisons.
 
-Another way to compute the solution is to define P(t), the profit value at time t, and consider that
+Another way to compute the solution is to define P(t), the profit value at time t, and consider that:
 
+    P(0) ≥ 0
     ∀ t,t'  t'>t ⇒  P(t') ≥ P(t) 
     ∀ t,d>0,p>0 | Order(t,d,p) ⇒ P(t+d) ≥ P(t)+p  
+    V ≥ P(t) | t = maximum { s+d | Order(s,d,p) }
     
-Applied to our example:
+Let's apply those rules to the case given as an example:
 
-    Order(0,5,100) ⇒ P(5)  ≥ P(0)+100 ⇒ P(5) ≥ 100
-    Order(3,7,140) ⇒ P(10) ≥ P(3)+140 ⇒ P(10) ≥ 140
-    Order(5,9, 80) ⇒ P(14) ≥ P(5)+80 ⇒ P(14) ≥ 180
-    Order(6,9, 70) ⇒ P(15) ≥ P(6)+70 ⇒ P(15) ≥ 170
-                     P(15) ≥ P(14) ⇒ P(15) ≥ 180 
+    Order(0,5,100) ⇒ P(5)  ≥ P(0)+100
+    P(0) ≥ 0       ⇒ P(5)  ≥ 100
+    Order(3,7,140) ⇒ P(10) ≥ P(3)+140
+    P(3) ≥ P(0)    ⇒ P(10) ≥ 140
+    Order(5,9, 80) ⇒ P(14) ≥ P(5)+80
+    P(5) ≥ 100     ⇒ P(14) ≥ 180
+    Order(6,9, 70) ⇒ P(15) ≥ P(6)+70
+    P(6) ≥ P(5)    ⇒ P(15) ≥ 170
+    P(15) ≥ P(14)  ⇒ P(15) ≥ 180
+    V ≥ P(15)      ⇒ S ≥ 180
 
-Rather than searching the order list for the maximum value recursively, we can process each calculation at the right time, while keeping track of the profit made so far. Each Order(s,d,p) involve two Operations:
+This suggest the following algorithm for solving our problem:
 
-- at time s, plan to *rent* the airplane, thus writing a profit value increased by p at time s+d
-- at time s+d, plan to  *cash* update V the profit value made so far
-
-
-    Order(s,d,p) ⇒ Operation(s, P[s+d] := max(V, P[s]+p)), Operation(s+d, V := max(V, P[s+d]))
-
-Thus the algorithm for computing the solution is:
-
-- initialize list of Operations to empty
-- for each Order(s,d,p):
-    - add an Operation at time s+d, of type Cash
-    - add an Operation at time s, of type Rent, with duration d and price p
-- initialize table Profit to empty
-- set V to 0
-- for each Operation(t,k,d,p) ordered by t + k (with Cash < Rent)
-    - if k = Cash : update V <- max(V,Profit[t])
-    - if k = Rent : update Profit[t+d] <- max(Profit[t]+p, V)
-         
+    using a planner with a cell for each time value,
+    for each order starting at s with duration d for price p,
+        make a note that at time s,
+            we will need to udpate the maximum value V with the profit value for that time if it is greater than V
+            and then plan a profit at time s+d to be at least V + p
+            (this is an UPDATE_AND_RENT operation)
  
-Given a sequence of Operations ordered on t, if we execute each Operation:
+        make a note that at time s+d, 
+            we will need to udpate the maximum value V with the profit value for that time if it is greater than V
+            (this an UPDATE operation)
 
-1. update the profit value made so far
-2. plan the ulterior profit made by rent at price + profit 
+    then running through the planner in chronological order:
+        perform the operation is there is one
 
-then we end up with the maximum profit value made with all the orders.
 
-3. Mapping time to money
-------------------------
+Let's try this algoritm with our example case. First, we check our order list:
 
-We want to solve this problem in Forth, using gforth. In addition to the standard data structures (a stack of 64 bits words and a dictionnary for our variables) we need to be able to map a time value to a money value. If time values were not so large, Using standard memory with `ALLOT` would be quite possible:
+    order at 0 duration 5, price 100:
+        note in cell 0 : UPDATE_AND_RENT at time 5, price V+100
+        note in cell 5 : UPDATE
+    order at 3 duration 7, price 140:
+        note in cell 3  : UPDATE_AND_RENT at time 10, price V+140
+        note in cell 10 : UPDATE
+    order at 5 duration 9, price 80:
+        note in cell 5  : UPDATE_AND_RENT at time 14, price V+80
+        note in cell 14 : UPDATE
+    order at 6 duration 9, price 70:
+        note in cell 6  : UPDATE_AND_RENT at time 15, price V+70
+        note in cell 15 : UPDATE
 
-    2000 CONSTANT MAX-TIME
-    CREATE PROFIT MAX-TIME CELLS ALLOT
-    PROFIT MAX-TIME CELLS ERASE
+Then we run through the planner, starting with V = 0:       
 
-    : PROFIT! ( n t --    store profit n at time t )
+    0 UPDATE_AND_RENT 5  100 : V  ← max(V,P(0)) = max(0,0) = 0
+                               P(5)  ← max(P(5),V+100) = max(0, 100) = 100
+    3 UPDATE_AND_RENT 10 140 : V  ← max(V,P(3)) = max(0,0) = 0
+                               P(10) ← max(P(10),V+140) = max(0, 140) = 140
+    5 UPDATE                 : V ← max(V, P(5)) = max(0,100) = 100
+
+    5 UPDATE_AND_RENT 14 80  : V ← max(V,P(5)) = max(100,100) = 100
+                               P(14) ← max(P(14),V+80) = max(0,180) = 180 
+    6 UPDATE_AND_RENT 15 70  : V ← max(V,P(6)) = max(100,0) = 100
+                               P(15) ← max(P(15),V+70) = max(0,170) = 170 
+    10 UPDATE                : V ← max(V, P(10)) = max (100, 140) = 140 
+    14 UPDATE                : V ← max(V, P(14)) = max (140, 180) = 180 
+    15 UPDATE                : V ← max(V, P(15)) = max (180, 170) = 180 
+
+And V is now the maximum profit value we can draw from the orders. 
+
+3. A Divide and Conquer Approach
+
+We want to solve this problem in Forth, using gforth. Let's first decompose our rather big problem into smaller ones:
+
+1. defining and updating a global money value V 
+2. retrieving and updating values in a table P that maps time values to money values 
+3. for each order entered by the user, memorizing 2 actions in a list
+4. sorting the list of actions by time then category of action (update, or update_and_rent)
+5. executing all the actions in the sorted list
+
+Defining a money value is very easy:
+
+	VARIABLE RENT-VALUE
+	0 RENT-VALUE !
+
+Let's start with a simple proof of concept: we will pretend for a moment that start time can only be comprised betmeen 0 and 100 as well as duration time. This allow for our profit planner to reside in the dictionnary:
+
+    CREATE PROFIT 200 CELLS ALLOT
+    PROFIT 200 CELLS ERASE   
+
+    : PROFIT@ ( t -- m   finds profit value at time t or 0 )
+        CELLS PROFIT + @ ;
+         
+    : PROFIT! ( m t --   stores profit value at time t )
         CELLS PROFIT + ! ;
 
-    : PROFIT@ ( t -- n    retrieve profit a time t )
-        CELLS PROFIT + @ ;
+Let's try our table:
 
-    4807 500 PROFIT!
-    500 PROFIT@ .
-    4807 ok
+	42 PROFIT@ .    ⏎  0 ok
+	4807 42 PROFIT! ⏎  ok
+	42 PROFIT@ .    ⏎  4807 ok
 
-But time values can be as large as 2000000, so that solution won't work:
+Now we need definition for actions:
+
+	: UPDATE-VALUE ( t --   update value with profit at time t if greater )
+		PROFIT@ RENT-VALUE @ MAX
+		RENT-VALUE ! ;
+
+    : UPDATE-PROFIT ( p t -- update profit at time t with p if p is greater )
+        DUP PROFIT@ 
+        ROT MAX 
+        SWAP PROFIT! ;
+         
+    : UPDATE-AND-RENT ( s d p  -- update profit table at s+d for price p )
+        ROT DUP UPDATE-VALUE
+        SWAP RENT-VALUE @ +
+        -ROT + UPDATE-PROFIT ;
+	
+Let's ignore for now the problem of storing action events and retrieving them in order, and pretend we can just execute these actions in the right order:
+
+    0 5 100 UPDATE-AND-RENT
+    3 7 140 UPDATE-AND-RENT
+    5       UPDATE-VALUE
+    5 9 80  UPDATE-AND-RENT
+    6 9 70  UPDATE-AND-RENT
+    10      UPDATE-VALUE
+    14      UPDATE-VALUE
+    15      UPDATE-VALUE
+    RENT-VALUE ? ⏎  180 ok
+
+4. Mapping time to money
+------------------------
+
+Of course, the specs for the requested program mention that time values can be as large as 2000000, so our solution of storing the PROFIT table in the dictionary won't work:
 
 	2000000 CONSTANT MAX-TIME  ok
 	CREATE PROFIT MAX-TIME CELLS ALLOT
@@ -133,7 +207,7 @@ But time values can be as large as 2000000, so that solution won't work:
 	Backtrace:
 	$10568E8E0 throw
 
-Besides, using such large dictionary space for only 10000 entries at last would be wasteful.
+Besides, using such large dictionary space for only 10000 time point entries at last would be wasteful.
 
 Enters `act` a module from the Forth Foundation Library. This module provides us with the ability to store key/values in AVL trees.
 
