@@ -152,8 +152,9 @@ Defining a money value is very easy:
 
 Let's start with a simple proof of concept: we will pretend for a moment that start time can only be comprised betmeen 0 and 100 as well as duration time. This allow for our profit planner to reside in the dictionnary:
 
-    CREATE PROFIT 200 CELLS ALLOT
-    PROFIT 200 CELLS ERASE   
+    200 CONSTANT MAX-TIME
+    CREATE PROFIT MAX-TIME CELLS ALLOT
+    PROFIT MAX-TIME CELLS ERASE   
 
     : PROFIT@ ( t -- m   finds profit value at time t or 0 )
         CELLS PROFIT + @ ;
@@ -209,17 +210,18 @@ Of course, the specs for the requested program mention that time values can be a
 
 Besides, using such large dictionary space for only 10000 time point entries at last would be wasteful.
 
-Enters `act` a module from the Forth Foundation Library. This module provides us with the ability to store key/values in AVL trees.
+Enters [`act`](http://irdvo.nl/FFL/docs/act.html) , a module from the Forth Foundation Library. This module provides us with the ability to store key/values in AVL trees. Here we use `ACT-CREATE` to create a new AVL tree named `PROFIT`, then `ACT-INSERT` to insert a new node, and we retrieve a money$ value via its time key with `ACT-GET`:
+
 
 	REQUIRE ffl/act.fs
 
 	ACT-CREATE PROFITS
 
-	: PROFIT! ( n t --    store profit n at time t )
-		PROFITS ACT-INSERT ;
-
-	: PROFIT@ ( t -- n    retrieve profit a time t or 0 if not found )
-		PROFITS ACT-GET 0= IF 0 THEN ;
+    : PROFIT@ ( t -- m   finds profit value at time t or 0 )
+        PROFIT ACT-GET 0= IF 0 THEN ;
+         
+    : PROFIT! ( m t --   stores profit value at time t )
+        PROFIT ACT-INSERT ;
 
 	4807 500000 PROFIT! ⏎
 	ok
@@ -228,4 +230,26 @@ Enters `act` a module from the Forth Foundation Library. This module provides us
 	234 PROFIT@ . ⏎ 
 	0  ok 
 
+One very useful feature of `act` library is the ability to execute a given definition on each and every node of a given tree. The execution sequence is sorted by key value. Let's print all the profit values from our example:
 
+    : .PROFIT ( m t --   pretty print the values )
+        ." Profit[ " . ." ] = " . CR ;
+
+    ' .PROFIT ( address of the defn ) PROFIT ACT-EXECUTE  ⏎
+	Profit[ 5 ] = 100
+	Profit[ 10 ] = 140
+	Profit[ 14 ] = 180
+	Profit[ 15 ] = 170
+	Profit[ 500000 ] = 4807
+	ok
+
+5. Storing and sorting actions
+------------------------------
+
+Wait a minute: if an AVL tree can store values corresponding to keys and can be searched in order of its keys, this structure is also exactly what we need to store and sort actions! 
+
+We just have to decide what will be the representation of the key and the representation for the data. Since the spec allows for distinct orders to have the same start time and duration, we need to have these two informations in our key, plus a 1 bit information about the category of action (update or udpate_and_rent).
+
+
+
+  

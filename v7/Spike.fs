@@ -1,15 +1,15 @@
+    REQUIRE ffl/act.fs
 
 	VARIABLE RENT-VALUE
 	0 RENT-VALUE !
 
-    CREATE PROFIT 200 CELLS ALLOT
-    PROFIT 200 CELLS ERASE   
+    ACT-CREATE PROFIT
 
     : PROFIT@ ( t -- m   finds profit value at time t or 0 )
-        CELLS PROFIT + @ ;
+        PROFIT ACT-GET 0= IF 0 THEN ;
          
     : PROFIT! ( m t --   stores profit value at time t )
-        CELLS PROFIT + ! ;
+        PROFIT ACT-INSERT ;
 
 	: UPDATE-VALUE ( t --   update value with profit at time t if greater )
 		PROFIT@ RENT-VALUE @ MAX
@@ -33,6 +33,12 @@
     10      UPDATE-VALUE
     14      UPDATE-VALUE
     15      UPDATE-VALUE
-    RENT-VALUE ?
+    RENT-VALUE ? CR
+
+	4807 500000 PROFIT! 
+    : .PROFIT-NODE ( m t --   pretty print the values )
+        ." Profit[ " . ." ] = " . CR ;
+
+    ' .PROFIT-NODE PROFIT ACT-EXECUTE 
     BYE
     
