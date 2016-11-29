@@ -25,6 +25,20 @@
         SWAP RENT-VALUE @ +
         -ROT + UPDATE-PROFIT ;
          
+    : ACTION>KEY ( t d -- k   encode time and duration in a word value )
+        SWAP 32 LSHIFT OR ;
+
+    : MASK ( b -- m  creates a mask of 32 bits all set to 1 ) 
+        -1 SWAP RSHIFT ;
+
+    : KEY>ACTION ( k -- t d   decode time and duration from a word value )
+        DUP 32 RSHIFT 
+        SWAP 32 MASK AND ; 
+
+    5    9 ACTION>KEY DUP ." KEY:" . KEY>ACTION SWAP ." TIME:" . ." DURATION:" . CR
+    4807 0 ACTION>KEY DUP ." KEY:" . KEY>ACTION SWAP ." TIME:" . ." DURATION:" . CR
+    BYE
+
     0 5 100 UPDATE-AND-RENT
     3 7 140 UPDATE-AND-RENT
     5       UPDATE-VALUE
