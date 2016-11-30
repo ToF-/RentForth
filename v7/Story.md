@@ -248,7 +248,7 @@ One very useful feature of `act` library is the ability to execute a given defin
 
 Wait a minute: if an AVL tree can store values corresponding to keys and can be searched in order of its keys, this structure is also exactly what we need to store and sort actions! 
 
-We just have to decide what will be the representation of the key and the representation for the data. Since the spec allows for distinct orders to have the same start time and duration, we need to have these two informations in our key, and we need a way to tell an update action from an update_and_rent action. That last information is actually easy to implement: if the duration part is 0 then the action is a simple update, if duration is > 0 then the action is an update_and_rent action.
+We just have to decide what will be the representation of the key and the representation for the data. Since the spec allows for distinct orders to have the same start time and duration, we need to have these two informations in our key, and we need a way to tell an update action from an update_and_rent action. That last information is actually easy to represent: if the duration part is 0 then the action is a simple update, if duration is > 0 then the action is an update_and_rent action.
 
 Since a key is a 64 bits value, we can split that key in two 32 bits parts (which gives us more than enough room for our start time and duration values). Here are the definitions:
 

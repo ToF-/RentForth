@@ -35,8 +35,37 @@
         DUP 32 RSHIFT 
         SWAP 32 MASK AND ; 
 
-    5    9 ACTION>KEY DUP ." KEY:" . KEY>ACTION SWAP ." TIME:" . ." DURATION:" . CR
-    4807 0 ACTION>KEY DUP ." KEY:" . KEY>ACTION SWAP ." TIME:" . ." DURATION:" . CR
+    ACT-CREATE ACTIONS
+
+    : ACTION@ ( k -- p   retrieve action from k or 0 if not found )
+        ACTIONS ACT-GET 0= IF 0 THEN ;
+
+    : ACTION! ( d k --   insert action with duration d at key k )
+        ACTIONS ACT-INSERT ;
+
+    : RENT-ACTION ( s d p -- record rent action at key s|d if not already in tree with greater p )
+        -ROT ACTION>KEY DUP ACTION@
+        ROT MAX SWAP ACTION!  ;
+
+    : UPDATE-ACTION ( s d -- record update action at key s+d|0 with value 0 )
+        + 0 ACTION>KEY 0 SWAP ACTION! ;
+
+    0 5 100 RENT-ACTION
+    5 0     UPDATE-ACTION
+    3 7 140 RENT-ACTION
+    10 0    UPDATE-ACTION
+    3 7 120 RENT-ACTION
+    10 0    UPDATE-ACTION
+    5 9 80  RENT-ACTION
+    14 0    UPDATE-ACTION
+    6 9 70  RENT-ACTION
+    15 0    UPDATE-ACTION
+
+    : .ACTION ( p k -- pretty print action )
+        KEY>ACTION SWAP ." Time:" . 
+        DUP 0= IF ." UPDATE " 2DROP ELSE ." RENT " ." Duration:" . ." Price:" . THEN CR ;
+
+    ' .ACTION ACTIONS ACT-EXECUTE
     BYE
 
     0 5 100 UPDATE-AND-RENT
