@@ -1,7 +1,7 @@
     REQUIRE ffl/act.fs
 
-	VARIABLE RENT-VALUE
-	0 RENT-VALUE !
+	VARIABLE VALUE
+	0 VALUE !
 
     ACT-CREATE PROFIT
 
@@ -11,18 +11,18 @@
     : PROFIT! ( m t --   stores profit value at time t )
         PROFIT ACT-INSERT ;
 
-	: UPDATE-VALUE ( t --   update value with profit at time t if greater )
-		PROFIT@ RENT-VALUE @ MAX
-		RENT-VALUE ! ;
+	: CASH ( t --   update value with profit at time t if greater )
+		PROFIT@ VALUE @ MAX
+		VALUE ! ;
 
     : UPDATE-PROFIT ( p t -- update profit at time t with p if p is greater )
         DUP PROFIT@ 
         ROT MAX 
         SWAP PROFIT! ;
          
-    : UPDATE-AND-RENT ( s d p  -- update profit table at s+d for price p )
-        ROT DUP UPDATE-VALUE
-        SWAP RENT-VALUE @ +
+    : RENT ( s d p  -- update profit table at s+d for price p )
+        ROT DUP CASH
+        SWAP VALUE @ +
         -ROT + UPDATE-PROFIT ;
          
     : ACTION>KEY ( t d -- k   encode time and duration in a word value )
@@ -43,40 +43,39 @@
     : ACTION! ( d k --   insert action with duration d at key k )
         ACTIONS ACT-INSERT ;
 
-    : RENT-ACTION ( s d p -- record rent action at key s|d if not already in tree with greater p )
+    : {RENT} ( s d p -- record rent action at key s|d if not already in tree with greater p )
         -ROT ACTION>KEY DUP ACTION@
         ROT MAX SWAP ACTION!  ;
 
-    : UPDATE-ACTION ( s d -- record update action at key s+d|0 with value 0 )
+    : {CASH} ( s d -- record update action at key s+d|0 with value 0 )
         + 0 ACTION>KEY 0 SWAP ACTION! ;
 
-    0 5 100 RENT-ACTION
-    5 0     UPDATE-ACTION
-    3 7 140 RENT-ACTION
-    10 0    UPDATE-ACTION
-    3 7 120 RENT-ACTION
-    10 0    UPDATE-ACTION
-    5 9 80  RENT-ACTION
-    14 0    UPDATE-ACTION
-    6 9 70  RENT-ACTION
-    15 0    UPDATE-ACTION
+    0 5 100 {RENT}
+    5 0     {CASH}
+    3 7 140 {RENT}
+    10 0    {CASH}
+    3 7 120 {RENT}
+    10 0    {CASH}
+    5 9 80  {RENT}
+    14 0    {CASH}
+    6 9 70  {RENT}
+    15 0    {CASH}
 
     : .ACTION ( p k -- pretty print action )
-        KEY>ACTION SWAP ." Time:" . 
-        DUP 0= IF ." UPDATE " 2DROP ELSE ." RENT " ." Duration:" . ." Price:" . THEN CR ;
+        KEY>ACTION SWAP ." at " . 
+        DUP 0= IF ." CASH " 2DROP ELSE ." RENT " . . THEN CR ;
 
     ' .ACTION ACTIONS ACT-EXECUTE
-    BYE
 
-    0 5 100 UPDATE-AND-RENT
-    3 7 140 UPDATE-AND-RENT
-    5       UPDATE-VALUE
-    5 9 80  UPDATE-AND-RENT
-    6 9 70  UPDATE-AND-RENT
-    10      UPDATE-VALUE
-    14      UPDATE-VALUE
-    15      UPDATE-VALUE
-    RENT-VALUE ? CR
+    0 5 100 RENT
+    3 7 140 RENT
+    5       CASH
+    5 9 80  RENT
+    6 9 70  RENT
+    10      CASH
+    14      CASH
+    15      CASH
+    VALUE ? CR
 
 	4807 500000 PROFIT! 
     : .PROFIT-NODE ( m t --   pretty print the values )

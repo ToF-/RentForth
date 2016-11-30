@@ -87,55 +87,85 @@ Let's apply those rules to the case given as an example:
 
 This suggest the following algorithm for solving our problem:
 
-    using a planner with a cell for each time value,
-    for each order starting at s with duration d for price p,
-        make a note that at time s,
-            we will need to udpate the maximum value V with the profit value for that time if it is greater than V
-            and then plan a profit at time s+d to be at least V + p
-            (this is an UPDATE_AND_RENT operation)
- 
-        make a note that at time s+d, 
-            we will need to udpate the maximum value V with the profit value for that time if it is greater than V
-            (this an UPDATE operation)
+    Planning the orders
+    
+    using a planner with a page for each possible time
+    each page can contain a value, and notes
+    for each order (s, d, p) :
+        write a note in page [s]   : {RENT [d] [p]}
+        write a note in page [s+d] : {CASH}
+        
+    Computing the value
 
-    then running through the planner in chronological order:
-        perform the operation is there is one
+    start with V = 0
+    run through each page [t] of the planner in chronological order
+    if page [t] contains a {CASH} note:
+        update V with the value in the page if the value is greater than V (no value = 0)
+    if page [t] contains a {RENT [d] [p]} note:
+        update V with the value in the page if the value is greater than V (no value = 0)
+        in page [t+d] write the value [V+p] if [V+p] is greater than that the value already at that page
 
+Let's try this algoritm with our example case. First, we plan our orders:
 
-Let's try this algoritm with our example case. First, we check our order list:
+    order at 0 duration 5 100:
+        note in page 0 : RENT 5 100
+        note in page 5 : CASH
+    order at 3 duration 7 140:
+        note in page 3  : RENT 10 140
+        note in page 10 : CASH
+    order at 5 duration 9 80:
+        note in page 5  : RENT 14 80
+        note in page 14 : CASH
+    order at 6 duration 9 70:
+        note in page 6  : RENT  15 70
+        note in page 15 : CASH
 
-    order at 0 duration 5, price 100:
-        note in cell 0 : UPDATE_AND_RENT at time 5, price V+100
-        note in cell 5 : UPDATE
-    order at 3 duration 7, price 140:
-        note in cell 3  : UPDATE_AND_RENT at time 10, price V+140
-        note in cell 10 : UPDATE
-    order at 5 duration 9, price 80:
-        note in cell 5  : UPDATE_AND_RENT at time 14, price V+80
-        note in cell 14 : UPDATE
-    order at 6 duration 9, price 70:
-        note in cell 6  : UPDATE_AND_RENT at time 15, price V+70
-        note in cell 15 : UPDATE
+    
+    +----------+----------+----------+----------+----------+----------+----------+
+    |     0    |     3    |     5    |    6     |    10    |    14    |    15    |
+    +----------+----------+----------+----------+----------+----------+----------+
+    |         0|         0|         0|         0|         0|         0|         0|
+    |RENT 5 100|RENT 7 140|CASH      |RENT 15 70|CASH      |CASH      |CASH      |
+    |          |          |RENT 15 80|          |          |          |          |
+    +----------+----------+----------+----------+----------+----------+----------+
 
-Then we run through the planner, starting with V = 0:       
+Then we run through the planner:
 
-    0 UPDATE_AND_RENT 5  100 : V  ← max(V,P(0)) = max(0,0) = 0
-                               P(5)  ← max(P(5),V+100) = max(0, 100) = 100
-    3 UPDATE_AND_RENT 10 140 : V  ← max(V,P(3)) = max(0,0) = 0
-                               P(10) ← max(P(10),V+140) = max(0, 140) = 140
-    5 UPDATE                 : V ← max(V, P(5)) = max(0,100) = 100
-
-    5 UPDATE_AND_RENT 14 80  : V ← max(V,P(5)) = max(100,100) = 100
-                               P(14) ← max(P(14),V+80) = max(0,180) = 180 
-    6 UPDATE_AND_RENT 15 70  : V ← max(V,P(6)) = max(100,0) = 100
-                               P(15) ← max(P(15),V+70) = max(0,170) = 170 
-    10 UPDATE                : V ← max(V, P(10)) = max (100, 140) = 140 
-    14 UPDATE                : V ← max(V, P(14)) = max (140, 180) = 180 
-    15 UPDATE                : V ← max(V, P(15)) = max (180, 170) = 180 
+    starting with V = 0
+    at page 0:
+    V     ← max(V,P(0)) = 0
+    P(5)  ← max(P(5),V+100) = 100
+    at page 3:
+    V     ← max(V,P(3)) = 0
+    P(10) ← max(P(10),V+140) = 140
+    at page 5:
+    V     ← max(V,P(5)) = 100
+    V     ← max(V,P(5)) = 100
+    P(14) ← max(P(14),V+80) = 180 
+    at page 6:
+    V     ← max(V,P(6)) = 100
+    P(15) ← max(P(15),V+70) = 170 
+    at page 10:
+    V    ← max(V,P(10)) = 140 
+    at page 14:
+    V    ← max(V,P(14)) = 180 
+    at page 15:
+    V    ← max(V,P(15)) = 180 
 
 And V is now the maximum profit value we can draw from the orders. 
 
+            V=0        V=0      V=100      V=100      V=140      V=180      V=180
+    +----------+----------+----------+----------+----------+----------+----------+
+    |     0    |     3    |     5    |    6     |    10    |    14    |    15    |
+    +----------+----------+----------+----------+----------+----------+----------+
+    |         0|         0|       100|         0|       140|       180|       170|
+    |RENT 5 100|RENT 7 140|CASH      |RENT 15 70|CASH      |CASH      |CASH      |
+    |          |          |RENT 15 80|          |          |          |          |
+    +----------+----------+----------+----------+----------+----------+----------+
+
+
 3. A Divide and Conquer Approach
+--------------------------------
 
 We want to solve this problem in Forth, using gforth. Let's first decompose our rather big problem into smaller ones:
 
@@ -147,8 +177,8 @@ We want to solve this problem in Forth, using gforth. Let's first decompose our 
 
 Defining a money value is very easy:
 
-	VARIABLE RENT-VALUE
-	0 RENT-VALUE !
+	VARIABLE VALUE
+	0 VALUE !
 
 Let's start with a simple proof of concept: we will pretend for a moment that start time can only be comprised betmeen 0 and 100 as well as duration time. This allow for our profit planner to reside in the dictionnary:
 
@@ -170,31 +200,31 @@ Let's try our table:
 
 Now we need definition for actions:
 
-	: UPDATE-VALUE ( t --   update value with profit at time t if greater )
-		PROFIT@ RENT-VALUE @ MAX
-		RENT-VALUE ! ;
+	: CASH ( t --   update value with profit at time t if greater )
+		PROFIT@ VALUE @ MAX
+		VALUE ! ;
 
     : UPDATE-PROFIT ( p t -- update profit at time t with p if p is greater )
         DUP PROFIT@ 
         ROT MAX 
         SWAP PROFIT! ;
          
-    : UPDATE-AND-RENT ( s d p  -- update profit table at s+d for price p )
-        ROT DUP UPDATE-VALUE
-        SWAP RENT-VALUE @ +
+    : RENT ( s d p  -- update profit table at s+d for price p )
+        ROT DUP CASH
+        SWAP VALUE @ +
         -ROT + UPDATE-PROFIT ;
 	
 Let's ignore for now the problem of storing action events and retrieving them in order, and pretend we can just execute these actions in the right order:
 
-    0 5 100 UPDATE-AND-RENT
-    3 7 140 UPDATE-AND-RENT
-    5       UPDATE-VALUE
-    5 9 80  UPDATE-AND-RENT
-    6 9 70  UPDATE-AND-RENT
-    10      UPDATE-VALUE
-    14      UPDATE-VALUE
-    15      UPDATE-VALUE
-    RENT-VALUE ? ⏎  180 ok
+    0 5 100 RENT
+    3 7 140 RENT
+    5       CASH
+    5 9 80  RENT
+    6 9 70  RENT
+    10      CASH
+    14      CASH
+    15      CASH
+    VALUE ? ⏎  180 ok
 
 4. Mapping time to money
 ------------------------
