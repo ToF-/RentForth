@@ -1,4 +1,0 @@
-#!/usr/bin/awk -f 
-BEGIN{ printf "%10s %s","","INCLUDE Rent.fs INIT-RENT\n"}
-{printf "%10d %10d %10d RENT %10d %10d + CASH\n",$1,$2,$3,$1,$2}
-END{print "CR RENT-VALUE ? BYE"}
