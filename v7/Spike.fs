@@ -62,17 +62,20 @@
 
     ACT-CREATE ACTIONS
  
-    : {CASH} ( t -- stores a cash action event in the action list )
+    : {CASH} ( t -- store a cash action event in the action tree )
         0 ACTION>KEY
         0 SWAP
         ACTIONS ACT-INSERT ;
 
-    : {RENT} ( t d p -- stores a rent action event in the action list )
+    : {RENT} ( t d p -- store/update a rent action event in the action tree )
         -ROT
-        ACTION>KEY
+        ACTION>KEY DUP 
+        ACTIONS ACT-GET IF
+            ROT MAX SWAP 
+        THEN 
         ACTIONS ACT-INSERT ;
 
-    : .ACTION ( n k -- pretty print an action read in the action list )
+    : .ACTION ( n k -- pretty print an action read in the action tree )
         KEY>ACTION CR
         DUP 0= IF DROP . ." Cash " DROP 
         ELSE SWAP . . . ." Rent " THEN ; 
@@ -80,6 +83,8 @@
     ACTIONS ACT-INIT
     5 9 100 {RENT}
     3 7 140 {RENT}
+    5 4 200 {RENT}
+    3 7  40 {RENT}
     5 {CASH}
     3 {CASH}
 

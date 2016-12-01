@@ -309,46 +309,65 @@ And here's a test:
     Key:20645907791872 Time:4807 Duration:0
 	ok  
 
-Now, storing action is easy:
+Now, storing actions is easy. We need an AVL tree that will serve as a key/value association tree:
 
     ACT-CREATE ACTIONS
+
+To store a Cash action, we create a compound key with the time and a duration of zero, define a value of also zero, and insert that in the tree:
  
-    : {CASH} ( t -- stores a cash action event in the action list )
+    : {CASH} ( t -- stores a cash action event in the action tree )
         0 ACTION>KEY
         0 SWAP
         ACTIONS ACT-INSERT ;
 
-    : {RENT} ( t d p -- stores a rent action event in the action list )
+Storing a Rent action is a bit more work, because if a Rent action for the same time and duration is already present in the tree, its price should be replaced only with a greater price, not smaller.
+
+So we create the compound key for the given time and duration, and then we search the tree for that key; if it's already present, we compare the price found  to the price we want to insert and keep the greater value. If it's not present, the price and the key are ready to be inserted in the tree.
+
+
+    : {RENT} ( t d p -- store/update a rent action event in the action tree )
         -ROT
-        ACTION>KEY
+        ACTION>KEY DUP 
+        ACTIONS ACT-GET IF
+            ROT MAX SWAP 
+        THEN 
         ACTIONS ACT-INSERT ;
 
-Let's test our definitions. Here's a word that will print an action as retrieved from the list: 
+Let's test our definitions. Here's a word that will print an action as retrieved from the tree: 
 
-    : .ACTION ( n k -- pretty print an action read in the action list )
+    : .ACTION ( n k -- pretty print an action read in the action tree )
         KEY>ACTION
         CR
         DUP 0= IF DROP . ." Cash " DROP 
         ELSE SWAP . . . ." Rent " THEN ; 
 
-We initialize the list, then insert some cash and rent actions:
+We initialize the tree, then insert some cash and rent actions:
 
     ACTIONS ACT-INIT
     5 9 100 {RENT}
     3 7 140 {RENT}
+    5 4 200 {RENT}
+    3 7  40 {RENT}
     5 {CASH}
     3 {CASH}
 
-Then we print the list:
+These actions are given in random order; several cases are given:
+
+    - same time, different category
+    - same time and category, different duration
+    - same time, category and duration, different price
+
+Then we print each node in the tree:
 
     ' .ACTION ACTIONS ACT-EXECUTE ⏎
 	
 	3 Cash
 	3 7 140 Rent
 	5 Cash
-	5 9 100 Rent Ok
- 	
-And act sorted our actions!
+	5 4 200 Rent
+	5 9 100 Rent	
+
+And here are our actions sorted by time. Note that the rent at 3 to 7 for 40 has been replaced by a better one as expected.
         
 
 
