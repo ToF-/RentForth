@@ -45,6 +45,15 @@ REQUIRE ffl/tst.fs
         14      CASH
         15      CASH
         PROFIT @ 180 ?S }T
+
+    ." TIME-DURATION>KEY encode time and duration" CR
+    T{  5 0 TIME-DURATION>KEY 
+        5 9 TIME-DURATION>KEY < TRUE ?S }T
+
+    ." KEY>TIME-DURATION decode key to time and duration" CR
+    T{  42 89 TIME-DURATION>KEY
+        KEY>TIME-DURATION  89 ?S 42 ?S }T
+
       
 ;
 TESTS

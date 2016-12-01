@@ -31,3 +31,14 @@ ACT-CREATE PLAN
     ROT DUP CASH
     SWAP PROFIT @ +
     -ROT + UPDATE-PLAN ;
+
+: TIME-DURATION>KEY ( t d -- k )
+    SWAP 32 LSHIFT OR ;
+
+: MASK ( n b -- n )
+    -1 SWAP RSHIFT AND ;
+ 
+: KEY>TIME-DURATION ( k -- t d )
+    DUP 32 RSHIFT 
+    SWAP 32 MASK ;
+    
