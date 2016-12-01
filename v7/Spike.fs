@@ -50,4 +50,38 @@
     
     V ?
 
+    : MASK ( b -- m  creates a mask of 32 bits all set to 1 ) 
+        -1 SWAP RSHIFT ;
+
+    : ACTION>KEY ( t d -- k   encode time and duration in a word value )
+        SWAP 32 LSHIFT OR ;
+
+    : KEY>ACTION ( k -- t d   decode time and duration from a word value )
+        DUP 32 RSHIFT 
+        SWAP 32 MASK AND ; 
+
+    ACT-CREATE ACTIONS
+ 
+    : {CASH} ( t -- stores a cash action event in the action list )
+        0 ACTION>KEY
+        0 SWAP
+        ACTIONS ACT-INSERT ;
+
+    : {RENT} ( t d p -- stores a rent action event in the action list )
+        -ROT
+        ACTION>KEY
+        ACTIONS ACT-INSERT ;
+
+    : .ACTION ( n k -- pretty print an action read in the action list )
+        KEY>ACTION CR
+        DUP 0= IF DROP . ." Cash " DROP 
+        ELSE SWAP . . . ." Rent " THEN ; 
+
+    ACTIONS ACT-INIT
+    5 9 100 {RENT}
+    3 7 140 {RENT}
+    5 {CASH}
+    3 {CASH}
+
+    ' .ACTION ACTIONS ACT-EXECUTE
     BYE

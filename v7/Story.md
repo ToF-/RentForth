@@ -284,11 +284,11 @@ We just have to decide what will be the representation of the key and the repres
 
 Distinguishing between a {RENT} action and a {CASH} action is important because for a given time we should always perform the {CASH} action before any {RENT} action (e.g we need to update the cash value at time 5, before calculating the profit made at time [5+9]). Fortunately this information is already in the key, and the right order is guaranted, too:
 
-- we can create a {CASH} action key using start time, and 0 as duration. 
-- for a {RENT} action key using start time and rent duration which will always be > 0
+- A {CASH} action has its key defined by *start time* and 0 as duration.
+- A {RENT} action key is defined by *start time* and a *duration* which will always be > 0
 
 
-Since a key is a 64 bits value, we can split that key in two 32 bits parts (which gives us more than enough room for our start time and duration values). Here are the definitions:
+Since a key is a 64 bits value, we can split that key in two 32 bits parts (which gives us more than enough room for our start time and duration values). Here are the definitions to encode time and duration into a key and vice-versa:
 
     : MASK ( b -- m  creates a mask of 32 bits all set to 1 ) 
         -1 SWAP RSHIFT ;
@@ -308,6 +308,48 @@ And here's a test:
     4807 0 ACTION>KEY DUP CR ." Key:" . KEY>ACTION SWAP ." Time:" . ." Duration:" . CR ⏎
     Key:20645907791872 Time:4807 Duration:0
 	ok  
+
+Now, storing action is easy:
+
+    ACT-CREATE ACTIONS
+ 
+    : {CASH} ( t -- stores a cash action event in the action list )
+        0 ACTION>KEY
+        0 SWAP
+        ACTIONS ACT-INSERT ;
+
+    : {RENT} ( t d p -- stores a rent action event in the action list )
+        -ROT
+        ACTION>KEY
+        ACTIONS ACT-INSERT ;
+
+Let's test our definitions. Here's a word that will print an action as retrieved from the list: 
+
+    : .ACTION ( n k -- pretty print an action read in the action list )
+        KEY>ACTION
+        CR
+        DUP 0= IF DROP . ." Cash " DROP 
+        ELSE SWAP . . . ." Rent " THEN ; 
+
+We initialize the list, then insert some cash and rent actions:
+
+    ACTIONS ACT-INIT
+    5 9 100 {RENT}
+    3 7 140 {RENT}
+    5 {CASH}
+    3 {CASH}
+
+Then we print the list:
+
+    ' .ACTION ACTIONS ACT-EXECUTE ⏎
+	
+	3 Cash
+	3 7 140 Rent
+	5 Cash
+	5 9 100 Rent Ok
+ 	
+And act sorted our actions!
+        
 
 
 
