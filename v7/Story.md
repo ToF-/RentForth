@@ -373,15 +373,16 @@ We're almost done!
 6. Entering Orders, Executing Actions
 -------------------------------------
 
+
 The algorithm takes two stages:
     
 1. Planning the orders
-2. Computing the profit value
+2. Computing the profit value
 
 To plan the orders, we will enter the start time, duration and price, then call the `ORDER` word. This will have the effect of:
 
-    - creating a cash action event at time = start + duration
-    - creating a rent action event at time = start with  duration and price parameters  
+- creating a cash action event at time = start + duration
+- creating a rent action event at time = start with  duration and price parameters  
 
     : ORDER ( t d p -- store cash and rent actions for order t d p )
         -ROT 2DUP + {CASH}
