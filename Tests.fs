@@ -4,56 +4,43 @@ REQUIRE Rent.fs
 REQUIRE ffl/tst.fs
 
 : TESTS
-    ." after initialize, profit should be zero" CR
-    INITIALIZE
-    T{ RENT-VALUE @ 0 ?S }T 
+    ." after INIT PROFIT should be zero" CR
+    4807 PROFIT !
+    INIT
+    T{ PROFIT @ 0 ?S }T 
 
-    ." rent action followed by update profit should increase profit" CR
-    INITIALIZE
-    3 7 140 PERFORM-OPERATION
-    10 0 0  PERFORM-OPERATION
-    T{ RENT-VALUE @ 140 ?S }T 
+    ." PLAN can store values for a given time" CR
+    T{ 42 PLAN@ 0 ?S }T
 
-    ." rent actions correctly sequenced should determine max profit" CR
-    INITIALIZE
-    0 5 100 PERFORM-OPERATION
-    3 7 140 PERFORM-OPERATION
-    5 9  80 PERFORM-OPERATION
-    6 9  70 PERFORM-OPERATION
-    10 0  0 PERFORM-OPERATION
-    14 0  0 PERFORM-OPERATION
-    15 0  0 PERFORM-OPERATION
-    T{ RENT-VALUE @ 180 ?S }T
+    T{ 4807 42 PLAN!
+       42 PLAN@ 4807 ?S }T
 
-    ." rent action should be composed and decomposed" CR
-    3 7 140 >OPERATION OPERATION> 
-    T{ 140 ?S 7 ?S 3 ?S }T
-    10 0 0  >OPERATION OPERATION>
-    T{ 0 ?S 0 ?S 10 ?S }T 
+    ." UPDATE-PROFIT store value in profit if greater" CR
+    T{  INIT
+        100 UPDATE-PROFIT  PROFIT @ 100 ?S
+         50 UPDATE-PROFIT  PROFIT @ 100 ?S 
+        500 UPDATE-PROFIT  PROFIT @ 500 ?S }T
 
-    ." update action should be lower than rent on same time" CR
-    3  7  0 >OPERATION 
-    10 1  1 >OPERATION
-    T{ < -1 ?S }T
+    ." UPDATE-PLAN store value in plan if greater" CR
+    T{  INIT
+        100 42 UPDATE-PLAN  42 PLAN@ 100 ?S
+         50 42 UPDATE-PLAN  42 PLAN@ 100 ?S 
+        500 42 UPDATE-PLAN  42 PLAN@ 500 ?S }T
 
-    ." after initialize, actions should be zero" CR
-    INITIALIZE
-    T{ OPERATIONS ACT-LENGTH@ 0 ?S }T 
+    ." CASH update PROFIT with plan at a given time" CR
+    T{  INIT 
+        500 42 PLAN!  PROFIT @   0 ?S
+            42 CASH   PROFIT @ 500 ?S 
+        100 53 PLAN! 
+            53 CASH   PROFIT @ 500 ?S }T   
 
-    ." adding order generates 2 actions" CR
-    INITIALIZE
-    3 7 140 ADD-ORDER
-    T{ OPERATIONS ACT-LENGTH@ 2 ?S }T
-
-    ." calc-profit should calculate profit made with orders" CR
-    INITIALIZE
-    6 9  70 ADD-ORDER
-    5 9  80 ADD-ORDER
-    3 7 140 ADD-ORDER
-    0 5 100 ADD-ORDER
-    CALC-RENT-VALUE
-    T{ RENT-VALUE @ 180 ?S }T
-
+    ." RENT update PLAN at time+duration with PROFIT+price" CR
+    T{  INIT
+        100 42 PLAN!
+        42 10 100 RENT   
+        52 PLAN@  200 ?S }T
+    
+      
 ;
 TESTS
 BYE
