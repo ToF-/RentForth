@@ -46,21 +46,21 @@ The constraints are as follow:
 
 We can determine the profit of a list of N orders using this formula
 
-- *V = maximum { P(i),P(i+1),..P(n) }*
-- *P(i) = p(i) + maximum { P(j) | j=1..n, t(j) >= t(i)+d(i) }*
+- *R = maximum { P(i),P(i+1),..P(n) }*
+- *R(i) = p(i) + maximum { P(j) | j=1..n, t(j) >= t(i)+d(i) }*
 
 where t(i),d(i) and p(i) = the start time, duration and price for an order(i)
 
 Applied to the example above:
 
-- *V = maximum { P(1),P(2),P(3),P(4) }*
+- *R = maximum { P(1),P(2),P(3),P(4) }*
 - *P(1) = 100 + maximum { P(3),P(4) }*
 - *P(1) = 100 + maximum { 80 + maximum { }, 70 + maximum { } }*
 - *P(1) = 180*
 - *P(2) = 140 + maximum { }*
 - *P(3) = 80 + maximum { }*
 - *P(4) = 70+ maximum { }*
-- *V = 180*
+- *R = 180*
 
 Infortunately this formula is not practical as the computation would require N! comparisons.
 
@@ -69,7 +69,7 @@ Another way to compute the solution is to define *P(t)*, the profit value at tim
 1. *P(0) ≥ 0*
 2. *∀ t,t'  t'>t ⇒  P(t') ≥ P(t)*
 3. *∀ t,d>0,p>0 | Order(t,d,p) ⇒ P(t+d) ≥ P(t)+p*
-4. *V ≥ P(t) | t = maximum { s+d | Order(s,d,p) }*
+4. *R = P(t) | t = maximum { s+d | Order(s,d,p) }*
     
 Let's apply those rules to the case given in the request as an example:
 
@@ -82,7 +82,7 @@ Let's apply those rules to the case given in the request as an example:
 - *Order(6,9, 70) ⇒ P(15) ≥ P(6)+70*
 - *P(6) ≥ P(5)    ⇒ P(15) ≥ 170* (r.2)
 - *P(15) ≥ P(14)  ⇒ P(15) ≥ 180* (r.2)
-- *V ≥ P(15)      ⇒ S ≥ 180*
+- *R = P(15)      ⇒ R ≥ 180*
 
 ### 1.3 An Algorithm
 
@@ -96,15 +96,15 @@ Using the four rules suggests the following algorithm for solving our problem:
         - write a note in page [s+d] : {CASH}
         
 2. Computing the value
-    - start with V = 0
+    - start with R = 0
     - run through each page [t] of the planner in chronological order
     - if page [t] contains a {CASH} note:
-        - update V with the value in the page if the value is greater than V (no value = 0)
+        - update R with the value in the page if the value is greater than R (no value = 0)
     - if page [t] contains a {RENT [d] [p]} note:
-        - update V with the value in the page if the value is greater than V (no value = 0)
-        - in page [t+d] write the value [V+p] if [V+p] is greater than that the value already at that page
+        - update R with the value in the page if the value is greater than R (no value = 0)
+        - in page [t+d] write the value [R+p] if [R+p] is greater than that the value already at that page
 
-And V will containt the maximum profit value for the given plan.
+And P will containt the maximum profit value for the given plan.
 
 Let's try this algoritm with our example case. First, we plan our orders:
 
@@ -133,18 +133,18 @@ The planner should look like this:
 
 Then we run through the planner:
 
-- starting with V = 0
-- at page 0: V ← max(V,P(0)) = 0 ; P(5)  ← max(P(5),V+100) = 100
-- at page 3: V ← max(V,P(3)) = 0 ; P(10) ← max(P(10),V+140) = 140
-- at page 5: V ← max(V,P(5)) = 100 ; V ← max(V,P(5)) = 100 ;  P(14) ← max(P(14),V+80) = 180 
-- at page 6: V ← max(V,P(6)) = 100 ; P(15) ← max(P(15),V+70) = 170 
-- at page 10: V ← max(V,P(10)) = 140 
-- at page 14: V ← max(V,P(14)) = 180 
-- at page 15: V ← max(V,P(15)) = 180 
+- starting with R = 0
+- at page 0: R ← max(R,P(0)) = 0 ; P(5)  ← max(P(5),P+100) = 100
+- at page 3: R ← max(R,P(3)) = 0 ; P(10) ← max(P(10),P+140) = 140
+- at page 5: R ← max(R,P(5)) = 100 ; R ← max(R,P(5)) = 100 ;  P(14) ← max(P(14),P+80) = 180 
+- at page 6: R ← max(R,P(6)) = 100 ; P(15) ← max(P(15),P+70) = 170 
+- at page 10: R ← max(R,P(10)) = 140 
+- at page 14: R ← max(R,P(14)) = 180 
+- at page 15: R ← max(R,P(15)) = 180 
 
-And V is now equal to the maximum profit value we can draw from the orders: 
+And R is now equal to the maximum profit value we can draw from the orders: 
 
-            V=0        V=0      V=100      V=100      V=140      V=180      V=180
+            R=0        R=0      R=100      R=100      R=140      R=180      R=180
     +----------+----------+----------+----------+----------+----------+----------+
     |     0    |     3    |     5    |    6     |    10    |    14    |    15    |
     +----------+----------+----------+----------+----------+----------+----------+
@@ -169,50 +169,50 @@ We want to solve this problem in Forth, using gforth. Let's first decompose our 
 Let's start with a simple proof of concept. We will pretend for a moment that the *start time* can only be comprised betmeen 0 and 100, as well as *duration*. That means that the maximum time value is 200. This allow for our profit planner to reside in the dictionnary:
 
     200 CONSTANT MAX-TIME
-    CREATE PROFIT MAX-TIME CELLS ALLOT
-    PROFIT MAX-TIME CELLS ERASE   
+    CREATE PLAN MAX-TIME CELLS ALLOT
+    PLAN MAX-TIME CELLS ERASE   
 
-`CELLS` multiplies the number on the stack with the number of bytes in a cell (8 on my version of gforth). The memory for `PROFIT` is alloted and filled with 0. We define access words:
+`CELLS` multiplies the number on the stack with the number of bytes in a cell (8 on my version of gforth). The memory for `PLAN` is alloted and filled with 0. We define access words:
 
-    : PROFIT@ ( t -- n   find profit at time t, or 0 )
-        CELLS PROFIT + @ ;
+    : PLAN@ ( t -- n   find profit at time t, or 0 )
+        CELLS PLAN + @ ;
          
-    : PROFIT! ( n t --   store n in profit table at time t )
-        CELLS PROFIT + ! ;
+    : PLAN! ( n t --   store n in profit table at time t )
+        CELLS PLAN + ! ;
 
 Let's try our table:
 
-	42 PROFIT@ CR .    4807 42 PROFIT!    42 PROFIT@ CR .  ⏎
+	42 PLAN@ CR .    4807 42 PLAN!    42 PLAN@ CR .  ⏎
     0 
     4807 ok
 
 Let's ignore for now the problem of interpreting orders as action marks to be sorted, and focus on the definitions we need to compute the maximum value:
 
-    VARIABLE V
+    VARIABLE PROFIT
 
-    : UPDATE-V ( n -- update value with n if n is greater )
-        V @ 
+    : UPDATE-PROFIT ( n -- update value with n if n is greater )
+        PROFIT @ 
         MAX
-        V ! ;
+        PROFIT ! ;
 
-    : UPDATE-PROFIT ( n t -- update profit at time t with n if n is greater )
-        DUP PROFIT@ 
+    : UPDATE-PLAN ( n t -- update profit at time t with n if n is greater )
+        DUP PLAN@ 
         ROT MAX 
-        SWAP PROFIT! ;
+        SWAP PLAN! ;
 
 	: CASH ( t --   update value with profit at time t if greater )
-		PROFIT@ 
-        UPDATE-V ;
-
-    : RENT ( t d n  -- cash profit at time t, then update profit at t+d with V+p )
-        ROT DUP CASH
-        SWAP V @ +
-        -ROT + 
+		PLAN@ 
         UPDATE-PROFIT ;
+
+    : RENT ( t d n  -- cash profit at time t, then update profit at t+d with PROFIT+p )
+        ROT DUP CASH
+        SWAP PROFIT @ +
+        -ROT + 
+        UPDATE-PLAN ;
 	
 Armed with these definitions we can pretend to run through a planner by executing actions in the right order:
     
-    0 V !
+    0 PROFIT !
 
     0 5 100 RENT
     3 7 140 RENT
@@ -223,7 +223,7 @@ Armed with these definitions we can pretend to run through a planner by executin
     14      CASH
     15      CASH
 
-    V ? ⏎  180 ok
+    PROFIT ? ⏎  180 ok
 
 It works!
 
@@ -231,48 +231,48 @@ It works!
 4. Mapping time to money
 ------------------------
 
-Of course, the specs for the requested program mention that time values can be as large as 2000000, so our solution of storing the PROFIT table in the dictionary won't work:
+Of course, the specs for the requested program mention that time values can be as large as 2000000, so our solution of storing the PLAN table in the dictionary won't work:
 
 	2000000 CONSTANT MAX-TIME  ok
-	CREATE PROFIT MAX-TIME CELLS ALLOT
+	CREATE PLAN MAX-TIME CELLS ALLOT
 	:2: Dictionary overflow
-	CREATE PROFIT MAX-TIME CELLS >>>ALLOT<<<
+	CREATE PLAN MAX-TIME CELLS >>>ALLOT<<<
 	Backtrace:
 	$10568E8E0 throw
 
 Besides, using such large dictionary space for only 10000 time point entries at last would be wasteful.
 
-Enters [`act`](http://irdvo.nl/FFL/docs/act.html) , a module from the Forth Foundation Library. This module provides us with the ability to store key/values in AVL trees. Here we use `ACT-CREATE` to create a new AVL tree named `PROFIT`, and then rewrite our access words so that they use `ACT-INSERT` to insert a new profit node, and `ACT-GET` to retrieve a profit at a given time :
+Enters [`act`](http://irdvo.nl/FFL/docs/act.html) , a module from the Forth Foundation Library. This module provides us with the ability to store key/values in AVL trees. Here we use `ACT-CREATE` to create a new AVL tree named `PLAN`, and then rewrite our access words so that they use `ACT-INSERT` to insert a new profit node, and `ACT-GET` to retrieve a profit at a given time :
 
 
 	REQUIRE ffl/act.fs
 
-	ACT-CREATE PROFITS
+	ACT-CREATE PLAN
 
-    : PROFIT@ ( t -- n   finds profit at time t or 0 )
-        PROFIT ACT-GET
+    : PLAN@ ( t -- n   finds profit at time t or 0 )
+        PLAN ACT-GET
         0= IF 0 THEN ;
          
-    : PROFIT! ( n t --   stores profit at time t )
-        PROFIT ACT-INSERT ;
+    : PLAN! ( n t --   stores profit at time t )
+        PLAN ACT-INSERT ;
 
-    PROFIT ACT-INIT
-	500000 PROFIT@ .
-	4807 500000 PROFIT!
-	500000 PROFIT@ . ⏎
+    PLAN ACT-INIT
+	500000 PLAN@ .
+	4807 500000 PLAN!
+	500000 PLAN@ . ⏎
 	0 4807  ok
 
 One very useful feature of `act` library is the ability to execute a given definition on each and every node of a given tree. The execution sequence is sorted by key. Let's print all the profit nodes from our example:
 
-    : .PROFIT ( m t --   pretty print the values )
-        ." Profit[ " . ." ] = " . CR ;
+    : .PLAN ( m t --   pretty print the values )
+        ." Plan[ " . ." ] = " . CR ;
 
-    ' .PROFIT ( address of the defn ) PROFIT ACT-EXECUTE  ⏎
-	Profit[ 5 ] = 100
-	Profit[ 10 ] = 140
-	Profit[ 14 ] = 180
-	Profit[ 15 ] = 170
-	Profit[ 500000 ] = 4807
+    ' .PLAN ( address of the defn ) PLAN ACT-EXECUTE  ⏎
+	Plan[ 5 ] = 100
+	Plan[ 10 ] = 140
+	Plan[ 14 ] = 180
+	Plan[ 15 ] = 170
+	Plan[ 500000 ] = 4807
 	ok
 
 5. Storing and sorting actions
@@ -368,6 +368,75 @@ Then we print each node in the tree:
 	5 9 100 Rent	
 
 And here are our actions sorted by time. Note that the rent at 3 to 7 for 40 has been replaced by a better one as expected.
+We're almost done!
+
+6. Entering Orders, Executing Actions
+-------------------------------------
+
+The algorithm takes two stages:
+    
+1. Planning the orders
+2. Computing the profit value
+
+To plan the orders, we will enter the start time, duration and price, then call the `ORDER` word. This will have the effect of:
+
+    - creating a cash action event at time = start + duration
+    - creating a rent action event at time = start with  duration and price parameters  
+
+    : ORDER ( t d p -- store cash and rent actions for order t d p )
+        -ROT 2DUP + {CASH}
+        ROT {RENT} ;
+
+Let's try our word:
+
+    ACTIONS ACT-INIT
+    5 9 100 ORDER
+    3 7 140 ORDER
+    5 4 200 ORDER
+    3 7  40 ORDER
+
+    ' .ACTION ACTIONS ACT-EXECUTE ⏎
+	
+	0 5 100 Rent
+	3 7 140 Rent
+	5 Cash
+	5 9 80 Rent
+	6 9 70 Rent
+	10 Cash
+	14 Cash
+    
+It works! Now for the computing part. Here's a word that will execute an action as retrieved from the `ACTIONS` tree:
+
+    : CASH? ( d -- b  return true if action is Cash ie duration d is 0, false if Rent )
+        0= ;
+
+    : ACTION ( n k -- perform action defined by key and value )
+        KEY>ACTION
+        DUP CASH? IF CASH DROP
+        ELSE SWAP RENT THEN ;
+
+And now we have to execute this word on every action stored in the tree:
+
+    ' ACTION CONSTANT EXEC-ACTION
+
+    : COMPUTE-PROFIT ( compute the profit value for all given orders )
+        0 PROFIT !
+        PLAN ACT-INIT
+        EXEC-ACTION ACTIONS ACT-EXECUTE ; 
+
+Let's test our program:
+
+    ACTIONS ACT-INIT
+    0 5 100 ORDER
+    3 7 140 ORDER
+    5 9  80 ORDER
+    6 9  70 ORDER
+    COMPUTE-PROFIT
+    CR PROFIT ? ⏎
+	180 Ok
+
+Fantastic! It works!
+
         
 
 

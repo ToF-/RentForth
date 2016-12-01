@@ -1,109 +1,92 @@
-\ Rent.fs
 
-\ example
+	\ Rent.fs
+	\ usage example :
+	\ INIT
+	\ 0 5 100 ORDER
+	\ 3 7 140 ORDER
+	\ 5 9  80 ORDER
+	\ 6 9  70 ORDER
+	\ COMPUTE-PROFIT
+	\ PROFIT ?
 
-\    INITIALIZE
-\    6 9  70 ADD-ORDER
-\    5 9  80 ADD-ORDER
-\    3 7 140 ADD-ORDER
-\    0 5 100 ADD-ORDER
-\    CALC-RENT-VALUE
-\    RENT-VALUE ?
+	\ should display: 180
 
-\ act = AVL binary tree cell module
-REQUIRE ffl/act.fs 
+	REQUIRE ffl/act.fs
 
-ACT-CREATE PROFITS  \ store profit value at a given time 
-ACT-CREATE OPERATIONS \ store operations ordered by time 
+	ACT-CREATE PLAN
+    ACT-CREATE ACTIONS
+    VARIABLE PROFIT 
 
-\ retrieve profit at a given time or 0
-: PROFIT@ ( t -- n )
-    PROFITS ACT-GET 0= IF 0 THEN ;
+    : PLAN@ ( t -- n   finds profit at time t or 0 )
+        PLAN ACT-GET
+        0= IF 0 THEN ;
+         
+    : PLAN! ( n t --   stores profit at time t )
+        PLAN ACT-INSERT ;
 
-\ store profit at a given time
-: PROFIT! ( n t -- ) 
-    PROFITS ACT-INSERT ;
+    : UPDATE-PROFIT ( n -- update value with n if n is greater )
+        PROFIT @ 
+        MAX
+        PROFIT ! ;
 
-VARIABLE RENT-VALUE 
+    : UPDATE-PLAN ( n t -- update profit at time t with n if n is greater )
+        DUP PLAN@ 
+        ROT MAX 
+        SWAP PLAN! ;
 
-: INITIALIZE          
-    PROFITS    ACT-(FREE) 
-    OPERATIONS ACT-(FREE) 
-    0 RENT-VALUE ! ;
+	: CASH ( t --   update value with profit at time t if greater )
+		PLAN@ 
+        UPDATE-PROFIT ;
 
-\ update rent value with profit at t if profit is greater 
-: UPDATE-RENT-VALUE ( t -- ) 
-    PROFIT@ RENT-VALUE @ MAX RENT-VALUE ! ;
+    : RENT ( t d n  -- cash profit at time t, then update profit at t+d with PROFIT+p )
+        ROT DUP CASH
+        SWAP PROFIT @ +
+        -ROT + 
+        UPDATE-PLAN ;
 
-\ update profit for a given time if n is greater 
-: UPDATE-PROFIT ( n t -- )
-    DUP PROFIT@ 
-    ROT MAX 
-    SWAP PROFIT! ;
+    : MASK ( b -- m  creates a mask of 32 bits all set to 1 ) 
+        -1 SWAP RSHIFT ;
 
-\ update rent value at time t 
-: DO-CASH ( t d p -- t d p )
-    ROT DUP UPDATE-RENT-VALUE -ROT ;
+    : ACTION>KEY ( t d -- k   encode time and duration in a word value )
+        SWAP 32 LSHIFT OR ;
 
-\ update profit with p + rent value, at time t + d 
-: DO-PLAN ( t d p -- ) 
-    RENT-VALUE @ + 
-    -ROT + UPDATE-PROFIT ;
+    : KEY>ACTION ( k -- t d   decode time and duration from a word value )
+        DUP 32 RSHIFT 
+        SWAP 32 MASK AND ; 
 
-\ update value at t then if price not null, plan the rent 
-: PERFORM-OPERATION ( t d p -- ) 
-    DO-CASH ?DUP IF DO-PLAN ELSE 2DROP THEN ;
+    : {CASH} ( t -- store a cash action event in the action tree )
+        0 ACTION>KEY
+        0 SWAP
+        ACTIONS ACT-INSERT ;
 
-\ we store an operation on a 63 bits 
-\ | 25 bits | 21 bits  | 17 bits |
-\ |  time   | duration |  price  |
+    : {RENT} ( t d p -- store/update a rent action event in the action tree )
+        -ROT
+        ACTION>KEY DUP 
+        ACTIONS ACT-GET IF ROT MAX SWAP THEN 
+        ACTIONS ACT-INSERT ;
 
-21 CONSTANT #DURATION
-17 CONSTANT #PRICE
+    : ORDER ( t d p -- store cash and rent actions for order t d p )
+        -ROT 2DUP + {CASH}
+        ROT {RENT} ;
 
-\ create binary mask of b bits 
-: MASK ( b -- m ) 
-    -1 SWAP LSHIFT INVERT ;
+    : CASH? ( d -- b  return true if action is Cash ie duration d is 0, false if Rent )
+        0= ;
 
-\ shift b bits in op then OR the value n in that op
-: >>OPERATION ( n o b -- o' ) 
-    LSHIFT OR ;
+    : ACTION ( n k -- perform action defined by key and value )
+        KEY>ACTION 
+        DUP CASH? 
+		IF  DROP CASH DROP
+        ELSE ROT RENT THEN ;
 
-\ extract b bits from op into value n then shift op
-: OPERATION>> ( k b -- n k' ) 
-    2DUP MASK AND -ROT RSHIFT ; 
+    ' ACTION CONSTANT EXEC-ACTION
 
-\ encode time duration and price in an operation 
-: >OPERATION ( t d p -- k )
-    SWAP ROT #DURATION >>OPERATION #PRICE >>OPERATION ;
+    : COMPUTE-PROFIT ( compute the profit value for all given orders )
+        0 PROFIT !
+        PLAN ACT-INIT
+        EXEC-ACTION ACTIONS ACT-EXECUTE ; 
 
-\ extract time, duration and price from an operation
-: OPERATION> ( k -- t d p )
-    #PRICE OPERATION>> #DURATION OPERATION>> SWAP ROT ;
+	: INIT ( -- initialize the action tree )
+		ACTIONS ACT-INIT ;
 
-\ store time duration and price as an operation 
-: OPERATIONS! ( t d p  -- )
-    >OPERATION NIL SWAP
-    OPERATIONS ACT-INSERT ;
-
-\ transform an order into a cash operation 
-: CASH-TYPE ( t d -- t d p ) + 0 0 ;
-
-\ this definition for symmetry  
-: RENT-TYPE ( t d p -- t d p ) ;
-
-\ store the cash and rent operations for an order  
-: ADD-ORDER ( t d p -- ) 
-    -ROT 2DUP CASH-TYPE OPERATIONS!
-     ROT      RENT-TYPE OPERATIONS! ;
-
-\ execute operation as retrieved in the tree  
-: DECODE-AND-PERFORM ( n k -- ) 
-    OPERATION> PERFORM-OPERATION DROP ;
-
-' DECODE-AND-PERFORM CONSTANT EXECUTE-OPERATION
-\ given operations stored after adding orders, compute rent value 
-: CALC-RENT-VALUE ( -- ) 
-    EXECUTE-OPERATION OPERATIONS ACT-EXECUTE ;
 
 

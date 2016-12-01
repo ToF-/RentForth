@@ -1,92 +1,92 @@
 
-	REQUIRE ffl/act.fs
+\ Rent.fs
+\ usage example :
+\ INIT
+\ 0 5 100 ORDER
+\ 3 7 140 ORDER
+\ 5 9  80 ORDER
+\ 6 9  70 ORDER
+\ COMPUTE-PROFIT
+\ PROFIT ?
 
-	ACT-CREATE PROFIT
+\ should display: 180
 
-    : PROFIT@ ( t -- n   finds profit at time t or 0 )
-        PROFIT ACT-GET
-        0= IF 0 THEN ;
-         
-    : PROFIT! ( n t --   stores profit at time t )
-        PROFIT ACT-INSERT ;
+REQUIRE ffl/act.fs
 
-    PROFIT ACT-INIT
-	500000 PROFIT@ .
-	4807 500000 PROFIT!
-	500000 PROFIT@ .
+ACT-CREATE PLAN
+ACT-CREATE ACTIONS
+VARIABLE PROFIT 
 
-    VARIABLE V 
+: PLAN@ ( t -- n   finds profit at time t or 0 )
+	PLAN ACT-GET
+	0= IF 0 THEN ;
+	 
+: PLAN! ( n t --   stores profit at time t )
+	PLAN ACT-INSERT ;
 
-    : UPDATE-V ( n -- update value with n if n is greater )
-        V @ 
-        MAX
-        V ! ;
+: UPDATE-PROFIT ( n -- update value with n if n is greater )
+	PROFIT @ 
+	MAX
+	PROFIT ! ;
 
-    : UPDATE-PROFIT ( n t -- update profit at time t with n if n is greater )
-        DUP PROFIT@ 
-        ROT MAX 
-        SWAP PROFIT! ;
+: UPDATE-PLAN ( n t -- update profit at time t with n if n is greater )
+	DUP PLAN@ 
+	ROT MAX 
+	SWAP PLAN! ;
 
-	: CASH ( t --   update value with profit at time t if greater )
-		PROFIT@ 
-        UPDATE-V ;
+: CASH ( t --   update value with profit at time t if greater )
+	PLAN@ 
+	UPDATE-PROFIT ;
 
-    : RENT ( t d n  -- cash profit at time t, then update profit at t+d with V+p )
-        ROT DUP CASH
-        SWAP V @ +
-        -ROT + 
-        UPDATE-PROFIT ;
+: RENT ( t d n  -- cash profit at time t, then update profit at t+d with PROFIT+p )
+	ROT DUP CASH
+	SWAP PROFIT @ +
+	-ROT + 
+	UPDATE-PLAN ;
 
-    0 V !
+: MASK ( b -- m  creates a mask of 32 bits all set to 1 ) 
+	-1 SWAP RSHIFT ;
 
-    0 5 100 RENT
-    3 7 140 RENT
-    5       CASH
-    5 9 80  RENT
-    6 9 70  RENT
-    10      CASH
-    14      CASH
-    15      CASH
-    
-    V ?
+: ACTION>KEY ( t d -- k   encode time and duration in a word value )
+	SWAP 32 LSHIFT OR ;
 
-    : MASK ( b -- m  creates a mask of 32 bits all set to 1 ) 
-        -1 SWAP RSHIFT ;
+: KEY>ACTION ( k -- t d   decode time and duration from a word value )
+	DUP 32 RSHIFT 
+	SWAP 32 MASK AND ; 
 
-    : ACTION>KEY ( t d -- k   encode time and duration in a word value )
-        SWAP 32 LSHIFT OR ;
+: {CASH} ( t -- store a cash action event in the action tree )
+	0 ACTION>KEY
+	0 SWAP
+	ACTIONS ACT-INSERT ;
 
-    : KEY>ACTION ( k -- t d   decode time and duration from a word value )
-        DUP 32 RSHIFT 
-        SWAP 32 MASK AND ; 
+: {RENT} ( t d p -- store/update a rent action event in the action tree )
+	-ROT
+	ACTION>KEY DUP 
+	ACTIONS ACT-GET IF ROT MAX SWAP THEN 
+	ACTIONS ACT-INSERT ;
 
-    ACT-CREATE ACTIONS
- 
-    : {CASH} ( t -- store a cash action event in the action tree )
-        0 ACTION>KEY
-        0 SWAP
-        ACTIONS ACT-INSERT ;
+: ORDER ( t d p -- store cash and rent actions for order t d p )
+	-ROT 2DUP + {CASH}
+	ROT {RENT} ;
 
-    : {RENT} ( t d p -- store/update a rent action event in the action tree )
-        -ROT
-        ACTION>KEY DUP 
-        ACTIONS ACT-GET IF
-            ROT MAX SWAP 
-        THEN 
-        ACTIONS ACT-INSERT ;
+: CASH? ( d -- b  return true if action is Cash ie duration d is 0, false if Rent )
+	0= ;
 
-    : .ACTION ( n k -- pretty print an action read in the action tree )
-        KEY>ACTION CR
-        DUP 0= IF DROP . ." Cash " DROP 
-        ELSE SWAP . . . ." Rent " THEN ; 
+: ACTION ( n k -- perform action defined by key and value )
+	KEY>ACTION 
+	DUP CASH? 
+	IF  DROP CASH DROP
+	ELSE ROT RENT THEN ;
 
-    ACTIONS ACT-INIT
-    5 9 100 {RENT}
-    3 7 140 {RENT}
-    5 4 200 {RENT}
-    3 7  40 {RENT}
-    5 {CASH}
-    3 {CASH}
+' ACTION CONSTANT EXEC-ACTION
 
-    ' .ACTION ACTIONS ACT-EXECUTE
-    BYE
+: COMPUTE-PROFIT ( compute the profit value for all given orders )
+	0 PROFIT !
+	PLAN ACT-INIT
+	EXEC-ACTION ACTIONS ACT-EXECUTE ; 
+
+: INIT ( -- initialize the action tree )
+	ACTIONS ACT-INIT ;
+
+
+
