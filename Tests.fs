@@ -54,7 +54,36 @@ REQUIRE ffl/tst.fs
     T{  42 89 TIME-DURATION>KEY
         KEY>TIME-DURATION  89 ?S 42 ?S }T
 
-      
+    ." {CASH} store a cash action" CR
+    T{  INIT-ACTIONS
+        5 {CASH}
+        5 0 TIME-DURATION>KEY ACTIONS ACT-GET
+        TRUE ?S 0 ?S }T
+
+    ." {RENT} store a rent action with duration and price" CR
+    T{  INIT-ACTIONS
+        5 9 40 {RENT}
+        5 9 80 {RENT}
+        5 9 70 {RENT}
+        5 9 TIME-DURATION>KEY ACTIONS ACT-GET
+        TRUE ?S 80 ?S }T
+
+    ." ADD-ORDER store cash and rent actions" CR
+    T{  INIT-ACTIONS
+        0 5 100 ADD-ORDER 
+        5 0 TIME-DURATION>KEY ACTIONS ACT-GET
+        TRUE ?S 0 ?S
+        0 5 TIME-DURATION>KEY ACTIONS ACT-GET
+        TRUE ?S 100 ?S }T
+
+    ." COMPUTE-PROFIT compute best profit best value" CR
+    T{  INIT-ACTIONS
+        0 5 100 ADD-ORDER
+        3 7 140 ADD-ORDER
+        5 9  80 ADD-ORDER
+        6 9  70 ADD-ORDER
+        COMPUTE-PROFIT
+        PROFIT @ 180 ?S }T
 ;
 TESTS
 BYE
