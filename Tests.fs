@@ -27,19 +27,24 @@ REQUIRE ffl/tst.fs
          50 42 UPDATE-PLAN  42 PLAN@ 100 ?S 
         500 42 UPDATE-PLAN  42 PLAN@ 500 ?S }T
 
-    ." CASH update PROFIT with plan at a given time" CR
+    ." CASH update profit with plan at a given time" CR
     T{  INIT 
         500 42 PLAN!  PROFIT @   0 ?S
             42 CASH   PROFIT @ 500 ?S 
         100 53 PLAN! 
             53 CASH   PROFIT @ 500 ?S }T   
 
-    ." RENT update PLAN at time+duration with PROFIT+price" CR
+    ." RENT update plan at time+duration with profit+price" CR
     T{  INIT
-        100 42 PLAN!
-        42 10 100 RENT   
-        52 PLAN@  200 ?S }T
-    
+        0 5 100 RENT
+        3 7 140 RENT
+        5       CASH
+        5 9  80 RENT
+        6 9  70 RENT
+        10      CASH
+        14      CASH
+        15      CASH
+        PROFIT @ 180 ?S }T
       
 ;
 TESTS
